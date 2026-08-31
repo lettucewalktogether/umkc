@@ -1,6 +1,7 @@
 # Public Innovation Challenge — course site
 
-Next.js site backing [innovation.vercel.app](https://innovation.vercel.app),
+Next.js site backing
+[publicinnovation.vercel.app](https://publicinnovation.vercel.app),
 publishing the course materials, data collection, and analysis for classroom
 Public Innovation Challenge simulations.
 
