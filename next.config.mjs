@@ -5,11 +5,11 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        // The site root is not meant to advertise what is hosted here; the
-        // class pages are reached by their direct URLs. Temporary (307) on
-        // purpose, so browsers do not cache this the way they cache a 308.
+        // The class is the only thing hosted here, so the bare domain goes
+        // straight to it. Temporary (307) on purpose, so browsers do not cache
+        // this the way they cache a 308.
         source: "/",
-        destination: "https://www.google.com",
+        destination: "/umkc/govtacctclass",
         permanent: false,
       },
     ];
