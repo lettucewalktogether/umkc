@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { get, list, put } from "@vercel/blob";
+import { del, get, list, put } from "@vercel/blob";
 import { SESSION_COOKIE, isValidSession, safeEqual } from "@/lib/auth";
 import { detectKind, parseEvalCsv } from "@/lib/dashboard";
 
@@ -124,4 +124,20 @@ export async function GET() {
   );
 
   return NextResponse.json({ files });
+}
+
+/**
+ * Clears every stored submission. Evaluations are kept only until grades are
+ * posted, so the instructor needs a way to delete them without going to the
+ * Vercel dashboard.
+ */
+export async function DELETE() {
+  const store = await cookies();
+  if (!(await isValidSession(store.get(SESSION_COOKIE)?.value))) {
+    return NextResponse.json({ error: "Not authorized." }, { status: 401 });
+  }
+
+  const { blobs } = await list({ prefix: PREFIX, limit: 1000 });
+  if (blobs.length) await del(blobs.map((b) => b.pathname));
+  return NextResponse.json({ ok: true, deleted: blobs.length });
 }

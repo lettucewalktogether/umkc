@@ -96,6 +96,28 @@ export default function Dashboard() {
     void loadSubmitted();
   }, [loadSubmitted]);
 
+  async function clearSubmitted() {
+    if (
+      !window.confirm(
+        "Permanently delete every submitted evaluation from the server? Export anything you still need first. Files you loaded by hand are not affected.",
+      )
+    ) {
+      return;
+    }
+    try {
+      const res = await fetch("/api/eval", { method: "DELETE" });
+      if (!res.ok) {
+        setSubmitStatus("error");
+        return;
+      }
+      setSubmittedCount(0);
+      setEvalRecords([]);
+      setSubmitStatus("ready");
+    } catch {
+      setSubmitStatus("error");
+    }
+  }
+
   async function handleFiles(fileList: FileList | null) {
     if (!fileList || fileList.length === 0) return;
     const nextErrors: string[] = [];
@@ -160,6 +182,14 @@ export default function Dashboard() {
             {submitStatus === "loading"
               ? "Checking submissions\u2026"
               : "Refresh submitted evaluations"}
+          </button>
+          <button
+            type="button"
+            className="danger"
+            onClick={clearSubmitted}
+            disabled={submittedCount === 0}
+          >
+            Delete submitted evaluations
           </button>
         </div>
         <p className={submitStatus === "error" ? "status incomplete" : "status"}>
