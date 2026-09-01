@@ -85,7 +85,7 @@ export default function References() {
       </ol>
 
       <nav className="pagenav">
-        <Link href={course.basePath}>&larr; Course overview</Link>
+        <Link href={course.basePath}>&larr; Challenge</Link>
       </nav>
     </>
   );

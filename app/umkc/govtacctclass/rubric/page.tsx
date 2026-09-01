@@ -198,7 +198,7 @@ export default function Rubric() {
       </div>
 
       <nav className="pagenav">
-        <Link href={`${course.basePath}/challenge`}>
+        <Link href={course.basePath}>
           &larr; The issued challenge
         </Link>
         <Link href={`${course.basePath}/accounting`}>

@@ -52,7 +52,7 @@ export default function Evaluate() {
 
       <nav className="pagenav">
         <Link href={`${course.basePath}/rubric`}>&larr; Full rubric</Link>
-        <Link href={course.basePath}>Course overview</Link>
+        <Link href={course.basePath}>Challenge</Link>
       </nav>
     </>
   );

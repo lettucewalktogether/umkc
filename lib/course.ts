@@ -25,72 +25,14 @@ export const classCode =
 export type NavItem = {
   href: string;
   label: string;
-  blurb: string;
-  /** Whether the item appears in the masthead nav. Items set to false are
-   * still linked from the "Start here" cards on the overview page. */
-  inNav: boolean;
 };
 
+/** The masthead sections. The challenge is the section home page. */
 export const nav: NavItem[] = [
-  {
-    href: `${course.basePath}`,
-    label: "Overview",
-    blurb: "How the unit fits together, milestones, and what each student owes.",
-    inNav: false,
-  },
-  {
-    href: `${course.basePath}/references`,
-    label: "References",
-    blurb:
-      "APA 7 entries for every statistical procedure, coding method, and external claim the site relies on.",
-    inNav: false,
-  },
-  {
-    href: `${course.basePath}/dashboard`,
-    label: "Dashboard",
-    blurb:
-      "Instructor view. Load the exported spreadsheets to see how each team scored and how confidence changed.",
-    inNav: false,
-  },
-  {
-    href: `${course.basePath}/challenge`,
-    label: "Challenge",
-    blurb:
-      "The issued Quality Control Review challenge, scope boundary, roles, and submission requirements.",
-    inNav: true,
-  },
-  {
-    href: `${course.basePath}/rubric`,
-    label: "Rubric",
-    blurb:
-      "The six weighted criteria, score bands, and the evaluator score sheet used for every team.",
-    inNav: true,
-  },
-  {
-    href: `${course.basePath}/eval`,
-    label: "Score a Team",
-    blurb:
-      "Fill in the evaluator score sheet on screen, with weighted totals calculated, and export every evaluation as a spreadsheet.",
-    inNav: false,
-  },
-  {
-    href: `${course.basePath}/assessment`,
-    label: "Assessment",
-    blurb:
-      "Ten identical questions administered before and after the simulation, on a seven-point confidence scale. Fill in on screen and export, or print.",
-    inNav: false,
-  },
-  {
-    href: `${course.basePath}/accounting`,
-    label: "Exercise",
-    blurb:
-      "The compressed post-selection procurement and government accounting sequence.",
-    inNav: true,
-  },
+  { href: `${course.basePath}`, label: "Challenge" },
+  { href: `${course.basePath}/rubric`, label: "Rubric" },
+  { href: `${course.basePath}/accounting`, label: "Exercise" },
 ];
-
-/** The subset of {@link nav} shown in the masthead. */
-export const navBar: NavItem[] = nav.filter((item) => item.inNav);
 
 /** Source documents mirrored under /public for download. */
 export const sourceDocs = [

@@ -22,7 +22,7 @@ export default function DashboardPage() {
       <Dashboard />
 
       <nav className="pagenav">
-        <Link href={course.basePath}>&larr; Course overview</Link>
+        <Link href={course.basePath}>&larr; Challenge</Link>
         <Link href={`${course.basePath}/references`}>References</Link>
         <form action={logout}>
           <button type="submit">Sign out</button>
