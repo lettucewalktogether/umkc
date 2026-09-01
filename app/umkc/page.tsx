@@ -9,7 +9,7 @@ export default function Umkc() {
       <header className="masthead">
         <div className="masthead-inner">
           <Link href="/" className="wordmark">
-            Public Innovation Challenge
+            Public AI Innovation Challenge
           </Link>
         </div>
       </header>
@@ -22,7 +22,7 @@ export default function Umkc() {
           <Link href={course.basePath} className="card">
             <h3>Government Accounting</h3>
             <p>
-              {course.instructor} · Public Innovation Challenge unit on Quality
+              {course.instructor} · Public AI Innovation Challenge unit on Quality
               Control Review and residential permitting.
             </p>
           </Link>

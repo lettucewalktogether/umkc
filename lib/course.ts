@@ -9,7 +9,7 @@ export const course = {
   school: "University of Missouri-Kansas City",
   instructor: "Marsha Huber",
   instructorTitle: "Professor",
-  unit: "Public Innovation Challenge",
+  unit: "Public AI Innovation Challenge",
   basePath: "/umkc/govtacctclass",
 } as const;
 

@@ -77,7 +77,7 @@ export default function Challenge() {
   return (
     <>
       <div className="pagehead">
-        <p className="eyebrow">The issued challenge</p>
+        <p className="eyebrow">{course.unit}</p>
         <h1>Quality Control Review, and the role of AI</h1>
         <p className="lede">
           Students work in competing Vendor Teams and respond to the same

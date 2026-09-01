@@ -3,11 +3,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Public Innovation Challenge",
-    template: "%s · Public Innovation Challenge",
+    default: "Public AI Innovation Challenge",
+    template: "%s · Public AI Innovation Challenge",
   },
   description:
-    "Course materials for the Public Innovation Challenge simulation used in the UMKC Government Accounting class.",
+    "Course materials for the Public AI Innovation Challenge simulation used in the UMKC Government Accounting class.",
 };
 
 export default function RootLayout({

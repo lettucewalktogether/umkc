@@ -29,7 +29,7 @@ export default function MethodsTab({
 
   const methods = `Method
 
-Participants and design. Students enrolled in ${course.name} at the ${course.school} (class identifier ${classCode}) completed a single-group pre/post design around the Public Innovation Challenge simulation, in which competing student vendor teams responded to a municipal Quality Control Review challenge and then evaluated one another's presentations. ${
+Participants and design. Students enrolled in ${course.name} at the ${course.school} (class identifier ${classCode}) completed a single-group pre/post design around the Public AI Innovation Challenge simulation, in which competing student vendor teams responded to a municipal Quality Control Review challenge and then evaluated one another's presentations. ${
     nPairs > 0
       ? `${nPairs} ${nPairs === 1 ? "student" : "students"} completed both the pre- and post-assessment and were matched on a self-generated anonymous code${
           match.preOnly.length + match.postOnly.length > 0

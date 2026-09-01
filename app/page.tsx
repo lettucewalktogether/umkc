@@ -7,14 +7,14 @@ export default function Home() {
       <header className="masthead">
         <div className="masthead-inner">
           <Link href="/" className="wordmark">
-            Public Innovation Challenge
+            Public AI Innovation Challenge
           </Link>
         </div>
       </header>
       <main>
         <div className="pagehead">
           <p className="eyebrow">Course simulations</p>
-          <h1>Public Innovation Challenge</h1>
+          <h1>Public AI Innovation Challenge</h1>
           <p className="lede">
             Classroom simulations in which student teams respond to a real
             public-sector problem, then evaluate one another under a published

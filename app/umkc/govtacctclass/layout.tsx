@@ -7,7 +7,7 @@ export const metadata = {
     template: "%s · Govt Accounting",
   },
   description:
-    "Public Innovation Challenge unit for the UMKC Government Accounting class: the issued Quality Control Review challenge, presentation rubric, pre/post assessment, and government accounting exercise.",
+    "Public AI Innovation Challenge unit for the UMKC Government Accounting class: the issued Quality Control Review challenge, presentation rubric, pre/post assessment, and government accounting exercise.",
 };
 
 export default function ClassLayout({
