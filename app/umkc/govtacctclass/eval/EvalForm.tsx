@@ -64,7 +64,7 @@ function totalFor(ev: Evaluation): number | null {
 function missingFrom(ev: Evaluation): string[] {
   const missing: string[] = [];
   if (!ev.team.trim()) missing.push("team evaluated");
-  if (!ev.evaluator.trim()) missing.push("evaluator name");
+  if (!ev.evaluator.trim()) missing.push("your student ID");
   for (const c of criteria) {
     const e = ev.entries[c.key];
     if (e?.score === null || e?.score === undefined) {
@@ -83,7 +83,7 @@ function missingFrom(ev: Evaluation): string[] {
 function csvRows(evaluations: Evaluation[]): (string | number)[][] {
   const header = [
     "Class code",
-    "Evaluator",
+    "Evaluator student ID",
     "Team evaluated",
     "Date",
     ...criteria.flatMap((c) => [
@@ -220,15 +220,15 @@ export default function EvalForm() {
         <h2>Evaluation header</h2>
         <div className="fieldrow">
           <label className="field">
-            <span>Your name (evaluator)</span>
+            <span>Your student ID</span>
             <input
               type="text"
               value={current.evaluator}
               onChange={(e) =>
                 setCurrent((p) => ({ ...p, evaluator: e.target.value }))
               }
-              placeholder="Last, First"
-              autoComplete="name"
+              placeholder="Student ID, not your name"
+              autoComplete="off"
             />
           </label>
           <label className="field">

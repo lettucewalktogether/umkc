@@ -22,26 +22,25 @@ export default function Evaluate() {
       <div className="panel">
         <span className="label">How this works</span>
         <p>
-          Nothing is submitted over the network. Your entries stay in this
-          browser, so finish a team, save it, and score the next one. When you
-          are done, use <strong>Export all to spreadsheet</strong> and hand the
-          CSV file to {course.instructor}. Opening it in Excel, Numbers, or
-          Google Sheets gives one row per evaluation, with a column for every
-          score, reason, and piece of evidence.
+          Your entries are held in this browser while you work, so finish a
+          team, save it, and score the next one. When you are done, use{" "}
+          <strong>Export all to spreadsheet</strong> and hand the CSV file to{" "}
+          {course.instructor}. Opening it in Excel, Numbers, or Google Sheets
+          gives one row per evaluation, with a column for every score, reason,
+          and piece of evidence.
         </p>
         <p>
-          This page carries no product analytics or session recording. The site
-          counts page visits, but nothing you type here is measured, recorded,
-          or transmitted.
+          This page carries no product analytics and no session recording.
         </p>
       </div>
 
       <div className="panel warn">
         <span className="label">Before you start</span>
         <p>
-          Students do not score their own team. Every score requires a primary
-          reason and specific presentation evidence, and individual scores are
-          submitted before group discussion. The professor may exclude
+          Identify yourself by student ID, not by name. Students do not score
+          their own team. Every score requires a primary reason and specific
+          presentation evidence, and individual scores are submitted before
+          group discussion. The professor may exclude
           incomplete, unsupported, or competitively distorted evaluations.
         </p>
       </div>

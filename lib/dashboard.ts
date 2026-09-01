@@ -62,7 +62,7 @@ export function parseEvalCsv(text: string): EvalRecord[] {
     }
     return {
       classCode: r["Class code"] ?? "",
-      evaluator: r["Evaluator"] ?? "",
+      evaluator: r["Evaluator student ID"] ?? r["Evaluator"] ?? "",
       team: r["Team evaluated"] ?? "",
       date: r["Date"] ?? "",
       scores,
