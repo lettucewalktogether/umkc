@@ -23,7 +23,10 @@ export async function login(
     };
   }
 
-  const submitted = String(formData.get("passcode") ?? "");
+  // configuredPasscode() trims the environment value, so trim the submitted
+  // one too. Otherwise a passcode pasted with a trailing space or newline is
+  // rejected even though it is correct.
+  const submitted = String(formData.get("passcode") ?? "").trim();
   if (!safeEqual(submitted, passcode)) {
     return { error: "That passcode was not recognized." };
   }
