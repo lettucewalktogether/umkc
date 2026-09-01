@@ -216,7 +216,7 @@ export default function EvalForm() {
     if (rows.length === 0) return;
     setSubmitState({ status: "sending" });
     try {
-      const res = await fetch("/api/eval", {
+      const res = await fetch("/api/submissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -224,15 +224,15 @@ export default function EvalForm() {
           csv: toCsv(csvRows(rows)),
         }),
       });
-      const data = (await res.json()) as { error?: string; evaluations?: number };
+      const data = (await res.json()) as { error?: string; rows?: number };
       if (!res.ok) {
         setSubmitState({ status: "error", message: data.error ?? "Submission failed." });
         return;
       }
       setSubmitState({
         status: "sent",
-        message: `Sent ${data.evaluations ?? rows.length} evaluation${
-          (data.evaluations ?? rows.length) === 1 ? "" : "s"
+        message: `Sent ${data.rows ?? rows.length} evaluation${
+          (data.rows ?? rows.length) === 1 ? "" : "s"
         }. Submitting again replaces what you sent.`,
       });
     } catch {

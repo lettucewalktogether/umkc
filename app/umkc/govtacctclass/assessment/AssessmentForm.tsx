@@ -77,6 +77,11 @@ export default function AssessmentForm() {
   const [current, setCurrent] = useState<Response>(() => emptyResponse());
   const [saved, setSaved] = useState<Response[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [submitPasscode, setSubmitPasscode] = useState("");
+  const [submitState, setSubmitState] = useState<{
+    status: "idle" | "sending" | "sent" | "error";
+    message?: string;
+  }>({ status: "idle" });
 
   // Restoring lets a student complete the pre-assessment now and the post
   // months later on the same browser, so one export carries both rows.
@@ -142,6 +147,48 @@ export default function AssessmentForm() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function currentRows() {
+    const rows = [...saved];
+    if (answeredCount(current) > 0) rows.push(current);
+    return rows;
+  }
+
+  async function submitAll() {
+    const rows = currentRows();
+    if (rows.length === 0) return;
+    setSubmitState({ status: "sending" });
+    try {
+      const res = await fetch("/api/submissions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          passcode: submitPasscode,
+          csv: toCsv(csvRows(rows)),
+        }),
+      });
+      const data = (await res.json()) as { error?: string; rows?: number };
+      if (!res.ok) {
+        setSubmitState({
+          status: "error",
+          message: data.error ?? "Submission failed.",
+        });
+        return;
+      }
+      setSubmitState({
+        status: "sent",
+        message: `Sent ${data.rows ?? rows.length} response${
+          (data.rows ?? rows.length) === 1 ? "" : "s"
+        }. Your pre- and post-assessments are stored separately, so submitting one never replaces the other.`,
+      });
+    } catch {
+      setSubmitState({
+        status: "error",
+        message:
+          "Could not reach the server. Export the CSV and hand it in instead.",
+      });
+    }
+  }
+
   function exportAll() {
     const rows = [...saved];
     if (answeredCount(current) > 0) rows.push(current);
@@ -154,6 +201,7 @@ export default function AssessmentForm() {
   }
 
   const canExport = saved.length > 0 || answeredCount(current) > 0;
+  const canSubmit = canExport && submitPasscode.trim() !== "";
   const missingExplanations = current.answers.filter(
     (a) => a.rating !== null && !a.explanation.trim(),
   ).length;
@@ -377,6 +425,52 @@ export default function AssessmentForm() {
           </div>
         </>
       )}
+
+      <section className="intake">
+        <h2>Submit to the instructor</h2>
+        <p className="status">
+          Sends your responses straight to the instructor dashboard, so there
+          is no file to hand in. The class passcode is the one your professor
+          reads out. Your pre- and post-assessments are stored separately, so
+          submitting the post never overwrites the pre.
+        </p>
+        <div className="fieldrow">
+          <label className="field">
+            <span>Class passcode</span>
+            <input
+              type="password"
+              value={submitPasscode}
+              autoComplete="off"
+              onChange={(e) => {
+                setSubmitPasscode(e.target.value);
+                setSubmitState({ status: "idle" });
+              }}
+            />
+          </label>
+        </div>
+        <div className="buttonrow">
+          <button
+            type="button"
+            className="primary"
+            onClick={submitAll}
+            disabled={!canSubmit || submitState.status === "sending"}
+          >
+            {submitState.status === "sending"
+              ? "Submitting\u2026"
+              : "Submit to instructor"}
+          </button>
+        </div>
+        {submitState.message && (
+          <p
+            className={
+              submitState.status === "sent" ? "status" : "status incomplete"
+            }
+            role="alert"
+          >
+            {submitState.message}
+          </p>
+        )}
+      </section>
 
       <div className="buttonrow">
         <button

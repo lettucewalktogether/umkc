@@ -73,7 +73,7 @@ export default function Dashboard() {
   const loadSubmitted = useCallback(async () => {
     setSubmitStatus("loading");
     try {
-      const res = await fetch("/api/eval", { cache: "no-store" });
+      const res = await fetch("/api/submissions", { cache: "no-store" });
       if (!res.ok) {
         setSubmitStatus("error");
         return;
@@ -81,11 +81,22 @@ export default function Dashboard() {
       const data = (await res.json()) as {
         files?: { pathname: string; csv: string }[];
       };
-      const rows = (data.files ?? []).flatMap((f) =>
+      const files = data.files ?? [];
+      const evalRows = files.flatMap((f) =>
         detectKind(f.csv) === "eval" ? parseEvalCsv(f.csv) : [],
       );
-      setSubmittedCount(data.files?.length ?? 0);
-      if (rows.length) setEvalRecords((prev) => dedupeEval([...prev, ...rows]));
+      const assessmentRows = files.flatMap((f) =>
+        detectKind(f.csv) === "assessment" ? parseAssessmentCsv(f.csv) : [],
+      );
+      setSubmittedCount(files.length);
+      if (evalRows.length) {
+        setEvalRecords((prev) => dedupeEval([...prev, ...evalRows]));
+      }
+      if (assessmentRows.length) {
+        setAssessmentRecords((prev) =>
+          dedupeAssessment([...prev, ...assessmentRows]),
+        );
+      }
       setSubmitStatus("ready");
     } catch {
       setSubmitStatus("error");
@@ -99,19 +110,20 @@ export default function Dashboard() {
   async function clearSubmitted() {
     if (
       !window.confirm(
-        "Permanently delete every submitted evaluation from the server? Export anything you still need first. Files you loaded by hand are not affected.",
+        "Permanently delete every submitted evaluation and assessment from the server? Export anything you still need first. Files you loaded by hand are not affected.",
       )
     ) {
       return;
     }
     try {
-      const res = await fetch("/api/eval", { method: "DELETE" });
+      const res = await fetch("/api/submissions", { method: "DELETE" });
       if (!res.ok) {
         setSubmitStatus("error");
         return;
       }
       setSubmittedCount(0);
       setEvalRecords([]);
+      setAssessmentRecords([]);
       setSubmitStatus("ready");
     } catch {
       setSubmitStatus("error");
@@ -181,7 +193,7 @@ export default function Dashboard() {
           >
             {submitStatus === "loading"
               ? "Checking submissions\u2026"
-              : "Refresh submitted evaluations"}
+              : "Refresh submissions"}
           </button>
           <button
             type="button"
@@ -189,20 +201,20 @@ export default function Dashboard() {
             onClick={clearSubmitted}
             disabled={submittedCount === 0}
           >
-            Delete submitted evaluations
+            Delete all submissions
           </button>
         </div>
         <p className={submitStatus === "error" ? "status incomplete" : "status"}>
           {submitStatus === "loading" &&
-            "Loading evaluations submitted from the scoring page\u2026"}
+            "Loading submitted evaluations and assessments\u2026"}
           {submitStatus === "ready" &&
             (submittedCount === 0
-              ? "No evaluations have been submitted yet. Students can still hand in CSV files below."
-              : `${submittedCount} student${
-                  submittedCount === 1 ? " has" : "s have"
-                } submitted directly. Load CSV files below for anyone who has not.`)}
+              ? "Nothing has been submitted yet. Students can still hand in CSV files below."
+              : `${submittedCount} submission${
+                  submittedCount === 1 ? "" : "s"
+                } loaded from the scoring and assessment pages. Load CSV files below for anyone who has not submitted.`)}
           {submitStatus === "error" &&
-            "Could not load submitted evaluations. Load the CSV files below instead."}
+            "Could not load submissions. Load the CSV files below instead."}
         </p>
       </section>
 

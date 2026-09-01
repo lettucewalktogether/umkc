@@ -40,11 +40,18 @@ export default function Assessment() {
       <div className="panel noprint">
         <span className="label">How to complete this</span>
         <p>
-          Fill it in below and use <strong>Export to spreadsheet</strong> to
-          produce a CSV file to hand in. Nothing is sent over the network &mdash;
-          your answers stay in this browser, so you can complete the
-          pre-assessment now and return to the same browser for the
-          post-assessment, and one export will then carry both rows for matching.
+          Fill it in below, then use <strong>Submit to instructor</strong> with
+          the class passcode your professor reads out. Your answers go straight
+          to the instructor dashboard, so there is no file to hand in. Submit
+          the pre-assessment now and the post-assessment later; they are stored
+          separately under your matching code, so the second never replaces the
+          first, and you do not have to return to the same browser.
+        </p>
+        <p>
+          You are identified only by the anonymous matching code you choose, so
+          reuse exactly the same code both times or the two cannot be paired.
+          <strong> Export to spreadsheet</strong> is still there if you would
+          rather hand in a file, or if submitting fails.
         </p>
         <p>
           You can also print this page for a paper copy, or download the{" "}
@@ -52,9 +59,7 @@ export default function Assessment() {
           instructor scoring section.
         </p>
         <p>
-          This page carries no product analytics or session recording. The site
-          counts page visits, but nothing you type here is measured, recorded,
-          or transmitted.
+          This page carries no product analytics and no session recording.
         </p>
       </div>
 
