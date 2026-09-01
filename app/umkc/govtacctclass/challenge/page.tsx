@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { course } from "@/lib/course";
 
-export const metadata = { title: "The Challenge" };
+export const metadata = { title: "Challenge" };
 
 const scope: [string, string][] = [
   [

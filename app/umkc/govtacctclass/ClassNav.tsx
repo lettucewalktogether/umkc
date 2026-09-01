@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { course, nav } from "@/lib/course";
+import { course, navBar } from "@/lib/course";
 
 export default function ClassNav() {
   const pathname = usePathname();
@@ -14,7 +14,7 @@ export default function ClassNav() {
           Govt Accounting <span>· {course.instructor}</span>
         </Link>
         <nav aria-label="Course sections">
-          {nav.map((item) => (
+          {navBar.map((item) => (
             <Link
               key={item.href}
               href={item.href}
