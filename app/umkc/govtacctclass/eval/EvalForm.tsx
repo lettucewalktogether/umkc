@@ -215,7 +215,7 @@ export default function EvalForm() {
     saved.length > 0 || current.team.trim() !== "" || total !== null;
 
   return (
-    <div className="form-ui">
+    <div className="form-ui ph-no-capture" data-clarity-mask="true">
       <section>
         <h2>Evaluation header</h2>
         <div className="fieldrow">

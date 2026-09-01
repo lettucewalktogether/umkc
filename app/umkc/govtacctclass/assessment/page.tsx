@@ -51,6 +51,11 @@ export default function Assessment() {
           <a href={assessmentDoc.href}>Word version</a>, which contains the
           instructor scoring section.
         </p>
+        <p>
+          This page carries no product analytics or session recording. The site
+          counts page visits, but nothing you type here is measured, recorded,
+          or transmitted.
+        </p>
       </div>
 
       <h2>Seven-point confidence scale</h2>

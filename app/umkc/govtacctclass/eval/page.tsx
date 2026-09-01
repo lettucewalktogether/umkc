@@ -29,6 +29,11 @@ export default function Evaluate() {
           Google Sheets gives one row per evaluation, with a column for every
           score, reason, and piece of evidence.
         </p>
+        <p>
+          This page carries no product analytics or session recording. The site
+          counts page visits, but nothing you type here is measured, recorded,
+          or transmitted.
+        </p>
       </div>
 
       <div className="panel warn">
