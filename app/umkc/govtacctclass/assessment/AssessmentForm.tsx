@@ -159,7 +159,7 @@ export default function AssessmentForm() {
   ).length;
 
   return (
-    <div className="form-ui ph-no-capture" data-clarity-mask="true">
+    <div className="form-ui" data-clarity-mask="true">
       <h2>Assessment information</h2>
       <div className="fieldrow">
         <label className="field">

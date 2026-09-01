@@ -13,7 +13,6 @@
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "next": "15.5.9",
-    "posthog-js": "^1.424.1",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "vader-sentiment": "^1.1.3"
