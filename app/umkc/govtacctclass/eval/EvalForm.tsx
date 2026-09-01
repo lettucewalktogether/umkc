@@ -132,6 +132,11 @@ export default function EvalForm() {
   const [current, setCurrent] = useState<Evaluation>(() => emptyEvaluation());
   const [saved, setSaved] = useState<Evaluation[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [submitPasscode, setSubmitPasscode] = useState("");
+  const [submitState, setSubmitState] = useState<{
+    status: "idle" | "sending" | "sent" | "error";
+    message?: string;
+  }>({ status: "idle" });
 
   // Restore saved evaluations. Reading localStorage can throw in private or
   // restricted browsing contexts, so a failure just means starting empty.
@@ -200,6 +205,44 @@ export default function EvalForm() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function currentRows() {
+    const rows = [...saved];
+    if (current.team.trim() || total !== null) rows.push(current);
+    return rows;
+  }
+
+  async function submitAll() {
+    const rows = currentRows();
+    if (rows.length === 0) return;
+    setSubmitState({ status: "sending" });
+    try {
+      const res = await fetch("/api/eval", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          passcode: submitPasscode,
+          csv: toCsv(csvRows(rows)),
+        }),
+      });
+      const data = (await res.json()) as { error?: string; evaluations?: number };
+      if (!res.ok) {
+        setSubmitState({ status: "error", message: data.error ?? "Submission failed." });
+        return;
+      }
+      setSubmitState({
+        status: "sent",
+        message: `Sent ${data.evaluations ?? rows.length} evaluation${
+          (data.evaluations ?? rows.length) === 1 ? "" : "s"
+        }. Submitting again replaces what you sent.`,
+      });
+    } catch {
+      setSubmitState({
+        status: "error",
+        message: "Could not reach the server. Export the CSV and hand it in instead.",
+      });
+    }
+  }
+
   function exportAll() {
     const rows = [...saved];
     if (current.team.trim() || total !== null) rows.push(current);
@@ -213,6 +256,7 @@ export default function EvalForm() {
 
   const canExport =
     saved.length > 0 || current.team.trim() !== "" || total !== null;
+  const canSubmit = canExport && submitPasscode.trim() !== "";
 
   return (
     <div className="form-ui" data-clarity-mask="true">
@@ -464,6 +508,52 @@ export default function EvalForm() {
           </table>
         </div>
       )}
+
+      <section className="intake">
+        <h2>Submit to the instructor</h2>
+        <p className="status">
+          Sends every evaluation on this page straight to the dashboard, so
+          there is no file to hand in. Submitting again replaces what you sent,
+          so you can correct a mistake. The class passcode is the one your
+          professor reads out.
+        </p>
+        <div className="fieldrow">
+          <label className="field">
+            <span>Class passcode</span>
+            <input
+              type="password"
+              value={submitPasscode}
+              autoComplete="off"
+              onChange={(e) => {
+                setSubmitPasscode(e.target.value);
+                setSubmitState({ status: "idle" });
+              }}
+            />
+          </label>
+        </div>
+        <div className="buttonrow">
+          <button
+            type="button"
+            className="primary"
+            onClick={submitAll}
+            disabled={!canSubmit || submitState.status === "sending"}
+          >
+            {submitState.status === "sending"
+              ? "Submitting\u2026"
+              : "Submit to instructor"}
+          </button>
+        </div>
+        {submitState.message && (
+          <p
+            className={
+              submitState.status === "sent" ? "status" : "status incomplete"
+            }
+            role="alert"
+          >
+            {submitState.message}
+          </p>
+        )}
+      </section>
 
       <div className="buttonrow">
         <button type="button" onClick={exportAll} disabled={!canExport}>

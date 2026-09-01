@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import TeamScores from "./TeamScores";
 import QuantTab from "./QuantTab";
 import QualTab from "./QualTab";
@@ -43,6 +43,10 @@ export default function Dashboard() {
   const [onlyComplete, setOnlyComplete] = useState(false);
   const [coding, setCodingState] = useState<Coding>({});
   const [codingLoaded, setCodingLoaded] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<
+    "loading" | "ready" | "error"
+  >("loading");
+  const [submittedCount, setSubmittedCount] = useState(0);
 
   // Coding is slow to redo, so it persists in this browser between sessions.
   useEffect(() => {
@@ -63,6 +67,34 @@ export default function Dashboard() {
       /* coding still works for this session */
     }
   }, [coding, codingLoaded]);
+
+  // Submitted evaluations arrive from the blob store; uploaded files still
+  // work alongside them, and dedupeEval collapses any overlap.
+  const loadSubmitted = useCallback(async () => {
+    setSubmitStatus("loading");
+    try {
+      const res = await fetch("/api/eval", { cache: "no-store" });
+      if (!res.ok) {
+        setSubmitStatus("error");
+        return;
+      }
+      const data = (await res.json()) as {
+        files?: { pathname: string; csv: string }[];
+      };
+      const rows = (data.files ?? []).flatMap((f) =>
+        detectKind(f.csv) === "eval" ? parseEvalCsv(f.csv) : [],
+      );
+      setSubmittedCount(data.files?.length ?? 0);
+      if (rows.length) setEvalRecords((prev) => dedupeEval([...prev, ...rows]));
+      setSubmitStatus("ready");
+    } catch {
+      setSubmitStatus("error");
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadSubmitted();
+  }, [loadSubmitted]);
 
   async function handleFiles(fileList: FileList | null) {
     if (!fileList || fileList.length === 0) return;
@@ -118,6 +150,32 @@ export default function Dashboard() {
 
   return (
     <div className="form-ui">
+      <section className="intake">
+        <div className="buttonrow">
+          <button
+            type="button"
+            onClick={() => void loadSubmitted()}
+            disabled={submitStatus === "loading"}
+          >
+            {submitStatus === "loading"
+              ? "Checking submissions\u2026"
+              : "Refresh submitted evaluations"}
+          </button>
+        </div>
+        <p className={submitStatus === "error" ? "status incomplete" : "status"}>
+          {submitStatus === "loading" &&
+            "Loading evaluations submitted from the scoring page\u2026"}
+          {submitStatus === "ready" &&
+            (submittedCount === 0
+              ? "No evaluations have been submitted yet. Students can still hand in CSV files below."
+              : `${submittedCount} student${
+                  submittedCount === 1 ? " has" : "s have"
+                } submitted directly. Load CSV files below for anyone who has not.`)}
+          {submitStatus === "error" &&
+            "Could not load submitted evaluations. Load the CSV files below instead."}
+        </p>
+      </section>
+
       <section className="intake">
         <label className="field">
           <span>Load exported spreadsheets</span>

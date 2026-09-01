@@ -24,10 +24,17 @@ export default function Evaluate() {
         <p>
           Your entries are held in this browser while you work, so finish a
           team, save it, and score the next one. When you are done, use{" "}
-          <strong>Export all to spreadsheet</strong> and hand the CSV file to{" "}
-          {course.instructor}. Opening it in Excel, Numbers, or Google Sheets
-          gives one row per evaluation, with a column for every score, reason,
-          and piece of evidence.
+          <strong>Submit to instructor</strong> with the class passcode{" "}
+          {course.instructor} reads out. Your scores go straight to the
+          instructor dashboard, so there is no file to hand in. Submitting
+          again replaces what you sent, so a mistake can be corrected.
+        </p>
+        <p>
+          Identify yourself by student ID. What you submit is your scoring of
+          other teams, and {course.instructor} can read it; it is not
+          anonymous to her, and it is kept only until grades are posted.{" "}
+          <strong>Export all to spreadsheet</strong> is still there if you
+          would rather hand in a file, or if submitting fails.
         </p>
         <p>
           This page carries no product analytics and no session recording.
