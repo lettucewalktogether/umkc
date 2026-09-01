@@ -22,8 +22,8 @@ export default function TeamScores({
   if (records.length === 0) {
     return (
       <p className="saved-empty">
-        Load the presentation-score spreadsheets your evaluators exported to see
-        team results.
+        No presentation scores yet. Team results appear here as evaluators
+        submit them.
       </p>
     );
   }

@@ -158,7 +158,7 @@ export default function AssessmentForm() {
     if (rows.length === 0) return;
     setSubmitState({ status: "sending" });
     try {
-      const res = await fetch("/api/submissions", {
+      const res = await fetch("/umkc/govtacctclass/api/submissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

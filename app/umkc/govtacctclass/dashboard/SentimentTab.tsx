@@ -174,7 +174,7 @@ export default function SentimentTab({
   if (records.length === 0) {
     return (
       <p className="saved-empty">
-        Load the assessment spreadsheets to run the sentiment analysis.
+        No assessments yet. Sentiment analysis runs once students submit them.
       </p>
     );
   }

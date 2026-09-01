@@ -12,10 +12,10 @@ export default function DashboardPage() {
         <p className="eyebrow">Instructor dashboard · {classCode}</p>
         <h1>Class results</h1>
         <p className="lede">
-          Load the spreadsheets your students exported to see how each team
-          scored and how confidence changed between the pre- and
-          post-assessment, with the statistics reported the way a paper would
-          report them.
+          Evaluations and assessments students submit arrive here on their own.
+          See how each team scored and how confidence changed between the pre-
+          and post-assessment, with the statistics reported the way a paper
+          would report them.
         </p>
       </div>
 

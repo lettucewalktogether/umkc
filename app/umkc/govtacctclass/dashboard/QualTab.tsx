@@ -55,7 +55,7 @@ export default function QualTab({
   if (records.length === 0) {
     return (
       <p className="saved-empty">
-        Load the assessment spreadsheets to code the open responses.
+        No assessments yet. Open responses appear here for coding as students submit them.
       </p>
     );
   }

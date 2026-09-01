@@ -73,7 +73,7 @@ export default function Dashboard() {
   const loadSubmitted = useCallback(async () => {
     setSubmitStatus("loading");
     try {
-      const res = await fetch("/api/submissions", { cache: "no-store" });
+      const res = await fetch("/umkc/govtacctclass/api/submissions", { cache: "no-store" });
       if (!res.ok) {
         setSubmitStatus("error");
         return;
@@ -116,7 +116,7 @@ export default function Dashboard() {
       return;
     }
     try {
-      const res = await fetch("/api/submissions", { method: "DELETE" });
+      const res = await fetch("/umkc/govtacctclass/api/submissions", { method: "DELETE" });
       if (!res.ok) {
         setSubmitStatus("error");
         return;
@@ -218,9 +218,10 @@ export default function Dashboard() {
         </p>
       </section>
 
-      <section className="intake">
+      <details className="intake">
+        <summary>Load exported spreadsheets (only if someone could not submit)</summary>
         <label className="field">
-          <span>Load exported spreadsheets</span>
+          <span>Choose CSV files</span>
           <input
             type="file"
             accept=".csv,text/csv"
@@ -232,12 +233,13 @@ export default function Dashboard() {
           />
         </label>
         <p className="status">
-          Select every CSV your students exported; presentation scores and
-          assessments can be loaded together and in any order. Files are read in
-          this browser and never uploaded. Duplicate rows are collapsed
+          Submitted work loads on its own; this is the fallback for a student
+          whose submission failed. Presentation scores and assessments can be
+          loaded together and in any order. Files are read in this browser and
+          never uploaded, and rows already submitted are collapsed
           automatically.
         </p>
-      </section>
+      </details>
 
       {files.length > 0 && (
         <div className="tablewrap">

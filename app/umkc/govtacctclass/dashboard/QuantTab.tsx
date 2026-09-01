@@ -120,7 +120,7 @@ export default function QuantTab({
   if (records.length === 0) {
     return (
       <p className="saved-empty">
-        Load the assessment spreadsheets to see the pre/post analysis.
+        No assessments yet. The pre/post analysis appears here as students submit them.
       </p>
     );
   }
