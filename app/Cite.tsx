@@ -1,4 +1,4 @@
-import { course } from "@/lib/course";
+import { referencesPath } from "@/lib/course";
 import { referenceMap } from "@/lib/references";
 
 /**
@@ -24,7 +24,7 @@ export default function Cite({
       {parts.map((p, i) => (
         <span key={p.key}>
           {i > 0 && "; "}
-          <a href={`${course.basePath}/references#${p.key}`}>{p.text}</a>
+          <a href={`${referencesPath}#${p.key}`}>{p.text}</a>
         </span>
       ))}
       {parens && ")"}

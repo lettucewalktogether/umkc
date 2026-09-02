@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Dashboard from "./Dashboard";
 import { logout } from "./actions";
-import { classCode, course } from "@/lib/course";
+import { classCode, course, referencesPath } from "@/lib/course";
 
 export const metadata = { title: "Instructor Dashboard" };
 
@@ -23,7 +23,7 @@ export default function DashboardPage() {
 
       <nav className="pagenav">
         <Link href={course.basePath}>&larr; Challenge</Link>
-        <Link href={`${course.basePath}/references`}>References</Link>
+        <Link href={referencesPath}>References</Link>
         <form action={logout}>
           <button type="submit">Sign out</button>
         </form>

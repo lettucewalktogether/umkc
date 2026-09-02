@@ -12,6 +12,13 @@ const nextConfig = {
         destination: "/umkc/govtacctclass",
         permanent: false,
       },
+      {
+        // The references moved under the dashboard they support; keep the old
+        // link working.
+        source: "/umkc/govtacctclass/references",
+        destination: "/umkc/govtacctclass/dashboard/references",
+        permanent: false,
+      },
     ];
   },
 };

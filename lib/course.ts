@@ -22,6 +22,13 @@ export const course = {
 export const classCode =
   process.env.NEXT_PUBLIC_CLASS_CODE?.trim() || "UMKC-GOVTACCT-HUBER";
 
+/**
+ * The references support the dashboard's methods, so they live under it. Public
+ * even so: the middleware gates the dashboard page itself, not this subtree,
+ * and <Cite> links point here from anywhere on the site.
+ */
+export const referencesPath = `${course.basePath}/dashboard/references`;
+
 export type NavItem = {
   href: string;
   label: string;
