@@ -85,7 +85,7 @@ export const references: Reference[] = [
   {
     key: "kerby2014",
     inText: "Kerby, 2014",
-    full: "Kerby, D. S. (2014). The simple difference formula: An approach to teaching nonparametric correlation. Comprehensive Psychology, 3, 11.IT.3.1.",
+    full: "Kerby, D. S. (2014). The simple difference formula: An approach to teaching nonparametric correlation. Comprehensive Psychology, 3, Article 11.IT.3.1.",
     doi: "10.2466/11.IT.3.1",
     usedFor:
       "Matched-pairs rank-biserial correlation, the effect size reported with the Wilcoxon test.",
@@ -108,7 +108,7 @@ export const references: Reference[] = [
   {
     key: "lakens2013",
     inText: "Lakens, 2013",
-    full: "Lakens, D. (2013). Calculating and reporting effect sizes to facilitate cumulative science: A practical primer for t-tests and ANOVAs. Frontiers in Psychology, 4, 863.",
+    full: "Lakens, D. (2013). Calculating and reporting effect sizes to facilitate cumulative science: A practical primer for t-tests and ANOVAs. Frontiers in Psychology, 4, Article 863.",
     doi: "10.3389/fpsyg.2013.00863",
     usedFor:
       "Choice of d_z for a within-subjects design, and reporting effect sizes with confidence intervals.",
@@ -184,7 +184,7 @@ export const primarySources: Reference[] = [
   {
     key: "shaib2025",
     inText: "Shaib et al., 2025",
-    full: "Shaib, C., et al. (2025). Measuring AI slop in text. arXiv.",
+    full: 'Shaib, C., Chakrabarty, T., Garcia-Olano, D., & Wallace, B. C. (2025). Measuring AI "slop" in text (arXiv:2509.19163). arXiv.',
     url: "https://arxiv.org/abs/2509.19163",
     usedFor:
       "The observation that no single technical definition of AI slop is settled, so the rubric evaluates observable quality instead.",
