@@ -23,16 +23,6 @@ export default async function LoginPage({
       </div>
 
       <LoginForm next={next ?? `${course.basePath}/dashboard`} />
-
-      <div className="panel">
-        <span className="label">Students</span>
-        <p>
-          You do not need this page. Score presentations on the{" "}
-          <a href={`${course.basePath}/eval`}>evaluation page</a> and complete
-          the <a href={`${course.basePath}/assessment`}>assessment</a>, then send
-          the exported spreadsheet file to {course.instructor}.
-        </p>
-      </div>
     </>
   );
 }
