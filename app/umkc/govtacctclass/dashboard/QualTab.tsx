@@ -91,18 +91,9 @@ export default function QualTab({
       <div className="panel">
         <span className="label">Computed, not coded</span>
         <p>
-          {total} written response{total === 1 ? "" : "s"} scanned
-          automatically. These are <strong>observable features</strong> of the
-          text &mdash; whether a response gives an example, names a record,
-          quantifies anything, hedges, or says outright that the writer does
-          not know. They are not judgments of whether an answer is correct.
-        </p>
-        <p>
-          That line is deliberate. Deciding whether a paragraph shows accurate
-          understanding or a misconception is a reading of meaning, and no
-          keyword rule settles it; a label like that would assert more than
-          the data supports. Reading for correctness stays a job for the
-          instructor, on the responses below.
+          {total} written response{total === 1 ? "" : "s"} scanned for
+          observable features of the text. These are not judgments of whether
+          an answer is correct &mdash; read the responses below for that.
         </p>
       </div>
 
@@ -114,10 +105,8 @@ export default function QualTab({
 
       <h3>Length</h3>
       <p>
-        Median response length is <strong>{median(words)}</strong> words (mean{" "}
-        {fmt(mean(words))}, shortest {Math.min(...words)}, longest{" "}
-        {Math.max(...words)}). Very short responses across the board usually
-        mean the instrument was rushed rather than that confidence was low.
+        Median <strong>{median(words)}</strong> words (mean {fmt(mean(words))},
+        range {Math.min(...words)}&ndash;{Math.max(...words)}).
       </p>
 
       <h3>Indicators across all responses</h3>
@@ -186,10 +175,6 @@ export default function QualTab({
       </div>
 
       <h3>Responses</h3>
-      <p>
-        Every response as written, with the indicators found in it. This is
-        the material to read when judging correctness.
-      </p>
       <div className="tablewrap">
         <table>
           <thead>
@@ -219,14 +204,12 @@ export default function QualTab({
       </div>
 
       <div className="panel warn">
-        <span className="label">What these indicators are not</span>
+        <span className="label">Presence is not quality</span>
         <p>
-          Presence of a feature is not quality. A response can name an invoice
-          and still be wrong about when the expenditure is recognised, and a
-          plain-language answer with no listed vocabulary can be entirely
-          correct. Content analysis of meaning needs a coder and a reliability
-          check <Cite k={["elo2008", "krippendorff2018"]} />; what is counted
-          here is only what can be counted without one.
+          A response can name an invoice and still be wrong; a plain-language
+          answer with no listed vocabulary can be right. Coding meaning needs
+          a human coder and a reliability check{" "}
+          <Cite k={["elo2008", "krippendorff2018"]} />.
         </p>
       </div>
     </>

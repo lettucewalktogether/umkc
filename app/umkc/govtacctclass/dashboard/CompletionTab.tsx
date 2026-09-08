@@ -15,6 +15,8 @@ type Props = {
   records: AssessmentRecord[];
   /** Null while "all cohorts" is selected: a roster belongs to one cohort. */
   cohort: string | null;
+  /** Removes one student's response from the dashboard. */
+  onRemove: (studentId: string) => Promise<void>;
 };
 
 type Row = {
@@ -23,7 +25,7 @@ type Row = {
   onRoster: boolean;
 };
 
-export default function CompletionTab({ records, cohort }: Props) {
+export default function CompletionTab({ records, cohort, onRemove }: Props) {
   const [roster, setRoster] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">(
@@ -100,9 +102,7 @@ export default function CompletionTab({ records, cohort }: Props) {
   const offRoster = rows.filter((r) => !r.onRoster && roster.length > 0);
 
   function label(r: Row): string {
-    if (r.submitted) return "Submitted";
-    // Only reachable for a roster entry: a non-submitter has no record.
-    return "Not submitted (on roster, nothing received)";
+    return r.submitted ? "Submitted" : "Not submitted";
   }
 
   return (
@@ -114,25 +114,18 @@ export default function CompletionTab({ records, cohort }: Props) {
         </p>
       ) : roster.length === 0 ? (
         <p>
-          {done} {done === 1 ? "student has" : "students have"} submitted the
-          assessment. <strong>Who has not submitted is unknown</strong>: a
-          student who did nothing appears nowhere in the data. Add the roster
-          below and this becomes answerable.
+          {done} submitted. Add a roster below to see who has not.
         </p>
       ) : (
         <p>
-          {done} of {roster.length} on the roster{" "}
-          {done === 1 ? "has" : "have"} submitted. {missing.length}{" "}
-          {missing.length === 1 ? "has" : "have"} not, counted against the
-          roster you saved for this cohort.
+          {done} of {roster.length} on the roster submitted.{" "}
+          {missing.length} did not.
         </p>
       )}
 
       {offRoster.length > 0 && (
         <p className="status incomplete">
-          {offRoster.length} student{offRoster.length === 1 ? "" : "s"} submitted
-          without appearing on the roster ({offRoster.map((r) => r.id).join(", ")}
-          ). Check for a mistyped ID.
+          Not on the roster: {offRoster.map((r) => r.id).join(", ")}
         </p>
       )}
 
@@ -143,6 +136,7 @@ export default function CompletionTab({ records, cohort }: Props) {
               <tr>
                 <th>Student ID</th>
                 <th>Status</th>
+                <th>Remove</th>
               </tr>
             </thead>
             <tbody>
@@ -150,6 +144,25 @@ export default function CompletionTab({ records, cohort }: Props) {
                 <tr key={r.id}>
                   <td>{r.id}</td>
                   <td>{label(r)}</td>
+                  <td>
+                    {r.submitted && (
+                      <button
+                        type="button"
+                        className="danger"
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              `Remove ${r.id} from the dashboard? Nothing is deleted; the response moves to the deep archive.`,
+                            )
+                          ) {
+                            void onRemove(r.id);
+                          }
+                        }}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -160,18 +173,11 @@ export default function CompletionTab({ records, cohort }: Props) {
       <h3>Roster</h3>
       {cohort === null ? (
         <p className="status">
-          Choose a single cohort above to enter or edit its roster. A roster
-          belongs to one cohort, so it cannot be edited while all cohorts are
-          shown.
+          Choose a single cohort above to edit its roster.
         </p>
       ) : (
         <>
-          <p>
-            Paste the student IDs enrolled in this cohort, one per line. Anyone
-            listed here who has not submitted shows above as{" "}
-            <strong>Not submitted</strong>. Without a roster the table can
-            only show who did submit.
-          </p>
+          <p>Student IDs enrolled in this cohort, one per line.</p>
           <label className="field">
             <span>Student IDs</span>
             <textarea

@@ -105,10 +105,8 @@ export default function QuantTab({
       <div className="panel">
         <span className="label">One administration</span>
         <p>
-          {records.length} response{records.length === 1 ? "" : "s"}, computed
-          from what students actually submitted and recalculated whenever the
-          dashboard refreshes. The instrument is given once, so these describe
-          the class as measured rather than testing change over time.
+          {records.length} response{records.length === 1 ? "" : "s"}. The
+          instrument is given once, so these describe the class as measured.
         </p>
       </div>
 
