@@ -165,7 +165,7 @@ export default function CompletionTab({ records, cohort }: Props) {
                 setDraft(e.target.value);
                 setStatus("idle");
               }}
-              placeholder={"S12345678\nS12345679"}
+              placeholder="One student ID per line"
             />
           </label>
           <div className="buttonrow">
