@@ -1026,3 +1026,52 @@ thead th.sym {
   letter-spacing: 0;
   font-size: 0.82rem;
 }
+
+/* Top-level switch between the two instruments' dashboards. Deliberately
+   heavier than .tabs: which instrument you are looking at is the first thing
+   the page has to answer. */
+.sections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 2rem 0 1.5rem;
+}
+
+button.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1 1 12rem;
+  text-align: left;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  color: var(--text-muted);
+  padding: 0.7rem 0.9rem;
+}
+
+button.section:hover {
+  border-color: var(--rule-strong);
+  color: var(--text);
+}
+
+button.section.on {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  color: var(--text);
+  background: var(--bg);
+}
+
+.section-label {
+  font-weight: 650;
+  font-size: 0.95rem;
+}
+
+.section-count {
+  font-size: 0.8rem;
+  color: var(--text-faint);
+}
+
+button.section.on .section-count {
+  color: var(--text-muted);
+}

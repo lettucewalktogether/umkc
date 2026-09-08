@@ -12,10 +12,12 @@ export default function DashboardPage() {
         <p className="eyebrow">Instructor dashboard · {classCode}</p>
         <h1>Class results</h1>
         <p className="lede">
-          Evaluations and assessments students submit arrive here on their own.
-          See how each team scored and how confidence changed between the pre-
-          and post-assessment, with the statistics reported the way a paper
-          would report them.
+          Two separate instruments, reported separately. The{" "}
+          <strong>class assessment</strong> measures confidence in government
+          accounting and government process before and after the unit; the{" "}
+          <strong>presentation evaluations</strong> record how teams scored
+          under the rubric. Submissions arrive here on their own, with the
+          statistics reported the way a paper would report them.
         </p>
       </div>
 

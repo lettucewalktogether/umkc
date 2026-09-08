@@ -18,22 +18,30 @@ import {
   type EvalRecord,
 } from "@/lib/dashboard";
 
-const TABS = [
-  { key: "teams", label: "Team scores" },
-  { key: "quant", label: "Quantitative" },
-  { key: "qual", label: "Qualitative" },
-  { key: "sentiment", label: "Sentiment" },
+const SECTIONS = [
+  { key: "assessment", label: "Class assessment" },
+  { key: "evals", label: "Presentation evaluations" },
   { key: "methods", label: "Methods" },
 ] as const;
 
-type TabKey = (typeof TABS)[number]["key"];
+type SectionKey = (typeof SECTIONS)[number]["key"];
+
+const ASSESSMENT_TABS = [
+  { key: "quant", label: "Quantitative" },
+  { key: "qual", label: "Qualitative" },
+  { key: "sentiment", label: "Sentiment" },
+] as const;
+
+type AssessmentTabKey = (typeof ASSESSMENT_TABS)[number]["key"];
 
 const CODING_KEY = "umkc-govtacct-coding-v1";
 
 type LoadedFile = { name: string; kind: string; rows: number };
 
 export default function Dashboard() {
-  const [tab, setTab] = useState<TabKey>("teams");
+  const [section, setSection] = useState<SectionKey>("assessment");
+  const [assessmentTab, setAssessmentTab] =
+    useState<AssessmentTabKey>("quant");
   const [evalRecords, setEvalRecords] = useState<EvalRecord[]>([]);
   const [assessmentRecords, setAssessmentRecords] = useState<
     AssessmentRecord[]
@@ -212,7 +220,11 @@ export default function Dashboard() {
               ? "Nothing has been submitted yet. Students can still hand in CSV files below."
               : `${submittedCount} submission${
                   submittedCount === 1 ? "" : "s"
-                } loaded from the scoring and assessment pages. Load CSV files below for anyone who has not submitted.`)}
+                } loaded: ${assessmentRecords.length} assessment response${
+                  assessmentRecords.length === 1 ? "" : "s"
+                } and ${evalRecords.length} presentation evaluation${
+                  evalRecords.length === 1 ? "" : "s"
+                }. Load CSV files below for anyone who has not submitted.`)}
           {submitStatus === "error" &&
             "Could not load submissions. Load the CSV files below instead."}
         </p>
@@ -310,44 +322,113 @@ export default function Dashboard() {
         </div>
       )}
 
-      <nav className="tabs" aria-label="Dashboard sections">
-        {TABS.map((t) => (
+      <nav className="sections" aria-label="Dashboard">
+        {SECTIONS.map((sec) => (
           <button
-            key={t.key}
+            key={sec.key}
             type="button"
-            className={tab === t.key ? "tab on" : "tab"}
-            aria-current={tab === t.key ? "page" : undefined}
-            onClick={() => setTab(t.key)}
+            className={section === sec.key ? "section on" : "section"}
+            aria-current={section === sec.key ? "page" : undefined}
+            onClick={() => setSection(sec.key)}
           >
-            {t.label}
+            <span className="section-label">{sec.label}</span>
+            <span className="section-count">
+              {sec.key === "assessment" &&
+                `${assessmentRecords.length} response${
+                  assessmentRecords.length === 1 ? "" : "s"
+                }`}
+              {sec.key === "evals" &&
+                `${evalRecords.length} evaluation${
+                  evalRecords.length === 1 ? "" : "s"
+                }`}
+              {sec.key === "methods" && "Both instruments"}
+            </span>
           </button>
         ))}
       </nav>
 
-      <div className="tabpanel">
-        {tab === "teams" && (
+      {section === "assessment" && (
+        <div className="tabpanel">
+          <div className="pagehead">
+            <p className="eyebrow">Instrument 1 of 2</p>
+            <h2>Class assessment</h2>
+            <p className="lede">
+              Confidence in government accounting and government process,
+              measured with the same ten questions before and after the unit.
+              Nothing on this dashboard comes from the presentation
+              evaluations.
+            </p>
+          </div>
+
+          <nav className="tabs" aria-label="Class assessment views">
+            {ASSESSMENT_TABS.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                className={assessmentTab === t.key ? "tab on" : "tab"}
+                aria-current={assessmentTab === t.key ? "page" : undefined}
+                onClick={() => setAssessmentTab(t.key)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="tabpanel">
+            {assessmentTab === "quant" && (
+              <QuantTab records={assessmentRecords} />
+            )}
+            {assessmentTab === "qual" && (
+              <QualTab
+                records={assessmentRecords}
+                coding={coding}
+                setCoding={(updater) => setCodingState((prev) => updater(prev))}
+              />
+            )}
+            {assessmentTab === "sentiment" && (
+              <SentimentTab records={assessmentRecords} />
+            )}
+          </div>
+        </div>
+      )}
+
+      {section === "evals" && (
+        <div className="tabpanel">
+          <div className="pagehead">
+            <p className="eyebrow">Instrument 2 of 2</p>
+            <h2>Presentation evaluations</h2>
+            <p className="lede">
+              How each team scored under the six published rubric criteria,
+              from the evaluations students submitted. Nothing on this
+              dashboard comes from the class assessment.
+            </p>
+          </div>
+
           <TeamScores
             records={evalRecords}
             onlyComplete={onlyComplete}
             setOnlyComplete={setOnlyComplete}
           />
-        )}
-        {tab === "quant" && <QuantTab records={assessmentRecords} />}
-        {tab === "qual" && (
-          <QualTab
-            records={assessmentRecords}
-            coding={coding}
-            setCoding={(updater) => setCodingState((prev) => updater(prev))}
-          />
-        )}
-        {tab === "sentiment" && <SentimentTab records={assessmentRecords} />}
-        {tab === "methods" && (
+        </div>
+      )}
+
+      {section === "methods" && (
+        <div className="tabpanel">
+          <div className="pagehead">
+            <p className="eyebrow">Both instruments</p>
+            <h2>Methods</h2>
+            <p className="lede">
+              A draft methods section covering the assessment and the
+              presentation evaluations, with every test and source named.
+            </p>
+          </div>
+
           <MethodsTab
             evalRecords={evalRecords}
             assessmentRecords={assessmentRecords}
           />
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
