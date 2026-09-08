@@ -9,10 +9,11 @@ export default function ArchivePage() {
     <>
       <div className="pagehead">
         <p className="eyebrow">Instructor archive</p>
-        <h1>Archived submissions</h1>
+        <h1>Hidden submissions</h1>
         <p className="lede">
-          Work set aside from the dashboard, grouped by cohort and instrument.
-          Restoring puts a cohort back on the dashboard exactly as it was.
+          Work hidden from the dashboard, grouped by cohort and instrument.
+          Nothing here is deleted. Reactivate puts a cohort back on the
+          dashboard exactly as it was.
         </p>
       </div>
 

@@ -25,6 +25,7 @@ export type Cohort = {
 /** Where submissions land when no cohort window covers the day. */
 export const UNASSIGNED_COHORT = "unassigned";
 
+
 export const DEFAULT_COHORTS: Cohort[] = [
   {
     id: "2026-fall",
@@ -61,8 +62,13 @@ export function cohortForDate(
 
 export function cohortLabel(cohorts: Cohort[], id: string): string {
   if (id === UNASSIGNED_COHORT) return "Outside every cohort window";
-  return cohorts.find((c) => c.id === id)?.label ?? id;
+  const known = cohorts.find((c) => c.id === id);
+  if (known) return known.label;
+  // An id with no definition is usually data filed before its cohort existed.
+  // Say so rather than printing a bare slug that reads like a real cohort.
+  return `Unrecognised cohort (${id})`;
 }
+
 
 /** Rejects malformed cohorts before they are stored. */
 export function validateCohorts(input: unknown): {
@@ -78,6 +84,9 @@ export function validateCohorts(input: unknown): {
     if (!label) return { error: "Every cohort needs a name." };
     const id = segment(String(c.id ?? label), "");
     if (!id) return { error: `Could not derive an id for "${label}".` };
+    if (id === UNASSIGNED_COHORT) {
+      return { error: `"${id}" is reserved and cannot be a cohort id.` };
+    }
     if (seen.has(id)) return { error: `Two cohorts share the id "${id}".` };
     seen.add(id);
     const startsOn = String(c.startsOn ?? "").trim();

@@ -120,6 +120,42 @@ export default function Dashboard() {
     void loadSubmitted();
   }, [loadSubmitted]);
 
+  /** Hides a whole cohort, both instruments, in one action. */
+  async function hideCohort(cohort: string) {
+    if (
+      !window.confirm(
+        `Hide everything in ${cohortLabel(
+          cohorts,
+          cohort,
+        )} from this dashboard? Nothing is deleted — it moves to the archive, where you can bring it back at any time.`,
+      )
+    ) {
+      return;
+    }
+    try {
+      for (const kind of ["assessment", "eval"] as const) {
+        const res = await fetch("/umkc/govtacctclass/api/submissions", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from: "active",
+            to: "archived",
+            kind,
+            cohort,
+          }),
+        });
+        if (!res.ok) {
+          setSubmitStatus("error");
+          return;
+        }
+      }
+      setCohortFilter(ALL_COHORTS);
+      await loadSubmitted();
+    } catch {
+      setSubmitStatus("error");
+    }
+  }
+
   /** Sets a cohort aside. Nothing is deleted; the archive page still has it. */
   async function archive(kind: "eval" | "assessment", cohort: string | null) {
     const what =
@@ -127,7 +163,7 @@ export default function Dashboard() {
     const where = cohort ? cohortLabel(cohorts, cohort) : "every cohort";
     if (
       !window.confirm(
-        `Archive the ${what} for ${where}? They leave this dashboard but stay readable on the archive page.`,
+        `Hide the ${what} for ${where}? Nothing is deleted — they move to the archive, where you can bring them back at any time.`,
       )
     ) {
       return;
@@ -274,6 +310,18 @@ export default function Dashboard() {
               ))}
             </select>
           </label>
+        )}
+
+        {cohortFilter !== ALL_COHORTS && (
+          <div className="buttonrow">
+            <button
+              type="button"
+              onClick={() => void hideCohort(cohortFilter)}
+              disabled={submittedCount === 0}
+            >
+              Hide this cohort from the dashboard
+            </button>
+          </div>
         )}
         <p className={submitStatus === "error" ? "status incomplete" : "status"}>
           {submitStatus === "loading" &&
@@ -434,7 +482,7 @@ export default function Dashboard() {
               }
               disabled={assessmentRecords.length === 0}
             >
-              Archive these assessment responses
+              Hide these assessment responses
             </button>
           </div>
 
@@ -499,7 +547,7 @@ export default function Dashboard() {
               }
               disabled={evalRecords.length === 0}
             >
-              Archive these presentation evaluations
+              Hide these presentation evaluations
             </button>
           </div>
 

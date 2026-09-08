@@ -84,7 +84,7 @@ export default function Archive() {
     )}`;
     const message =
       to === "active"
-        ? `Restore the ${what} to the dashboard?`
+        ? `Reactivate the ${what} on the dashboard?`
         : `Move the ${what} to the deep archive? They disappear from every view here, but nothing is deleted — the files stay in storage and can be recovered.`;
     if (!window.confirm(message)) return;
 
@@ -123,8 +123,8 @@ export default function Archive() {
   if (groups.length === 0) {
     return (
       <p className="saved-empty">
-        Nothing is archived. Archive a cohort from the dashboard when its work
-        is finished.
+        Nothing is hidden. Hide a cohort from the dashboard when its work is
+        finished, and it will appear here to reactivate later.
       </p>
     );
   }
@@ -139,7 +139,7 @@ export default function Archive() {
               <th>Instrument</th>
               <th className="num">Files</th>
               <th>Last submitted</th>
-              <th>Restore</th>
+              <th>Reactivate</th>
             </tr>
           </thead>
           <tbody>
@@ -155,7 +155,7 @@ export default function Archive() {
                     onClick={() => void move(g, "active")}
                     disabled={busy === g.key}
                   >
-                    Restore
+                    Reactivate
                   </button>
                 </td>
               </tr>
