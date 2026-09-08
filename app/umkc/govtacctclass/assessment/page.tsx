@@ -48,11 +48,9 @@ export default function Assessment() {
           first, and you do not have to return to the same browser.
         </p>
         <p>
-          Enter your student ID both times so the two can be paired. Your
-          responses are not anonymous to {course.instructor}: she can see who
-          completed each assessment, and they are kept only until grades are
-          posted.<strong> Export to spreadsheet</strong> is still there if you
-          would rather hand in a file, or if submitting fails.
+          Enter your student ID both times so the two can be paired.{" "}
+          <strong>Export to spreadsheet</strong> is still there if you would
+          rather hand in a file, or if submitting fails.
         </p>
         <p>
           You can also print this page for a paper copy, or download the{" "}
