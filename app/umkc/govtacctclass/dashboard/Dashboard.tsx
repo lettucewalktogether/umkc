@@ -12,7 +12,6 @@ import { cohortLabel, type Cohort } from "@/lib/cohorts";
 import {
   dedupeAssessment,
   dedupeEval,
-  detectKind,
   parseAssessmentCsv,
   parseEvalCsv,
   type AssessmentRecord,
@@ -36,8 +35,6 @@ const ASSESSMENT_TABS = [
 
 type AssessmentTabKey = (typeof ASSESSMENT_TABS)[number]["key"];
 
-type LoadedFile = { name: string; kind: string; rows: number };
-
 /** One stored submission, as the API returns it. */
 type SubmittedFile = {
   pathname: string;
@@ -54,24 +51,17 @@ export default function Dashboard() {
   const [section, setSection] = useState<SectionKey>("assessment");
   const [assessmentTab, setAssessmentTab] =
     useState<AssessmentTabKey>("completion");
-  const [uploadedEval, setUploadedEval] = useState<EvalRecord[]>([]);
-  const [uploadedAssessment, setUploadedAssessment] = useState<
-    AssessmentRecord[]
-  >([]);
   const [submittedFiles, setSubmittedFiles] = useState<SubmittedFile[]>([]);
   const [cohorts, setCohorts] = useState<Cohort[]>([]);
   const [cohortFilter, setCohortFilter] = useState<string>(ALL_COHORTS);
-  const [files, setFiles] = useState<LoadedFile[]>([]);
-  const [errors, setErrors] = useState<string[]>([]);
   const [onlyComplete, setOnlyComplete] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<
     "loading" | "ready" | "error"
   >("loading");
 
 
-  // Coding is slow to redo, so it persists in this browser between sessions.
-  // Submitted evaluations arrive from the blob store; uploaded files still
-  // work alongside them, and dedupeEval collapses any overlap.
+  // Submissions are the only source; dedupe collapses a student who
+  // resubmitted before the store overwrote their previous file.
   const loadSubmitted = useCallback(async () => {
     setSubmitStatus("loading");
     try {
@@ -168,50 +158,6 @@ export default function Dashboard() {
     }
   }
 
-  async function handleFiles(fileList: FileList | null) {
-    if (!fileList || fileList.length === 0) return;
-    const nextErrors: string[] = [];
-    const nextFiles: LoadedFile[] = [];
-    let newEval: EvalRecord[] = [];
-    let newAssessment: AssessmentRecord[] = [];
-
-    for (const file of Array.from(fileList)) {
-      let text: string;
-      try {
-        text = await file.text();
-      } catch {
-        nextErrors.push(`${file.name}: could not be read.`);
-        continue;
-      }
-
-      const kind = detectKind(text);
-      if (kind === "eval") {
-        const rows = parseEvalCsv(text);
-        newEval = newEval.concat(rows);
-        nextFiles.push({ name: file.name, kind: "Presentation scores", rows: rows.length });
-      } else if (kind === "assessment") {
-        const rows = parseAssessmentCsv(text);
-        newAssessment = newAssessment.concat(rows);
-        nextFiles.push({ name: file.name, kind: "Assessment", rows: rows.length });
-      } else {
-        nextErrors.push(
-          `${file.name}: not recognized. Load the CSV files exported from the evaluation or assessment pages, unedited.`,
-        );
-      }
-    }
-
-    if (newEval.length) {
-      setUploadedEval((prev) => dedupeEval([...prev, ...newEval]));
-    }
-    if (newAssessment.length) {
-      setUploadedAssessment((prev) =>
-        dedupeAssessment([...prev, ...newAssessment]),
-      );
-    }
-    setFiles((prev) => [...prev, ...nextFiles]);
-    setErrors(nextErrors);
-  }
-
   const visibleFiles = useMemo(
     () =>
       submittedFiles.filter(
@@ -226,9 +172,8 @@ export default function Dashboard() {
         ...visibleFiles.flatMap((f) =>
           f.kind === "eval" ? parseEvalCsv(f.csv) : [],
         ),
-        ...uploadedEval,
       ]),
-    [visibleFiles, uploadedEval],
+    [visibleFiles],
   );
 
   const assessmentRecords = useMemo(
@@ -237,9 +182,8 @@ export default function Dashboard() {
         ...visibleFiles.flatMap((f) =>
           f.kind === "assessment" ? parseAssessmentCsv(f.csv) : [],
         ),
-        ...uploadedAssessment,
       ]),
-    [visibleFiles, uploadedAssessment],
+    [visibleFiles],
   );
 
   /** Cohorts to offer: any with submissions, plus whichever is selected even
@@ -320,85 +264,18 @@ export default function Dashboard() {
             "Loading submitted evaluations and assessments\u2026"}
           {submitStatus === "ready" &&
             (submittedCount === 0
-              ? "Nothing has been submitted yet. Students can still hand in CSV files below."
+              ? "Nothing has been submitted yet."
               : `${submittedCount} submission${
                   submittedCount === 1 ? "" : "s"
                 } loaded: ${assessmentRecords.length} assessment response${
                   assessmentRecords.length === 1 ? "" : "s"
                 } and ${evalRecords.length} presentation evaluation${
                   evalRecords.length === 1 ? "" : "s"
-                }. Load CSV files below for anyone who has not submitted.`)}
+                }.`)}
           {submitStatus === "error" &&
-            "Could not load submissions. Load the CSV files below instead."}
+            "Could not load submissions. Try Refresh submissions."}
         </p>
       </section>
-
-      <details className="intake">
-        <summary>Load exported spreadsheets (only if someone could not submit)</summary>
-        <label className="field">
-          <span>Choose CSV files</span>
-          <input
-            type="file"
-            accept=".csv,text/csv"
-            multiple
-            onChange={(e) => {
-              void handleFiles(e.target.files);
-              e.target.value = "";
-            }}
-          />
-        </label>
-        <p className="status">
-          Submitted work loads on its own; this is the fallback for a student
-          whose submission failed. Presentation scores and assessments can be
-          loaded together and in any order. Files are read in this browser and
-          never uploaded, and rows already submitted are collapsed
-          automatically.
-        </p>
-      </details>
-
-      {files.length > 0 && (
-        <div className="tablewrap">
-          <table>
-            <thead>
-              <tr>
-                <th>File</th>
-                <th>Type</th>
-                <th className="num">Rows</th>
-              </tr>
-            </thead>
-            <tbody>
-              {files.map((f, i) => (
-                <tr key={`${f.name}-${i}`}>
-                  <td>{f.name}</td>
-                  <td>{f.kind}</td>
-                  <td className="num">{f.rows}</td>
-                </tr>
-              ))}
-              <tr>
-                <td colSpan={2}>
-                  <strong>After removing duplicates</strong>
-                </td>
-                <td className="num">
-                  <strong>
-                    {evalRecords.length + assessmentRecords.length}
-                  </strong>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {errors.length > 0 && (
-        <div className="panel warn">
-          <span className="label">Files not loaded</span>
-          <ul>
-            {errors.map((e) => (
-              <li key={e}>{e}</li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       {foreignCodes.length > 0 && (
         <p className="status incomplete">
@@ -406,23 +283,6 @@ export default function Dashboard() {
           this deployment ({classCode}). They are still included — check that
           they belong to this class before reporting.
         </p>
-      )}
-
-      {(evalRecords.length > 0 || assessmentRecords.length > 0) && (
-        <div className="buttonrow">
-          <button
-            type="button"
-            className="danger"
-            onClick={() => {
-              setUploadedEval([]);
-              setUploadedAssessment([]);
-              setFiles([]);
-              setErrors([]);
-            }}
-          >
-            Clear loaded files
-          </button>
-        </div>
       )}
 
       <nav className="sections" aria-label="Dashboard">
