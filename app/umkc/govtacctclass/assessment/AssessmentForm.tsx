@@ -18,10 +18,10 @@ type Response = {
 
 const STORAGE_KEY = "umkc-govtacct-assessment-v1";
 
-function emptyResponse(code = ""): Response {
+function emptyResponse(code = "", point: Response["point"] = ""): Response {
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    point: "",
+    point,
     code,
     team: "",
     date: today(),
@@ -73,8 +73,13 @@ function csvRows(responses: Response[]): (string | number)[][] {
   return [header, ...rows];
 }
 
-export default function AssessmentForm() {
-  const [current, setCurrent] = useState<Response>(() => emptyResponse());
+export default function AssessmentForm({
+  defaultPoint,
+}: {
+  /** Preselected on a fresh response; see defaultAssessmentPoint(). */
+  defaultPoint: "Pre" | "Post";
+}) {
+  const [current, setCurrent] = useState<Response>(() => emptyResponse("", defaultPoint));
   const [saved, setSaved] = useState<Response[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [submitPasscode, setSubmitPasscode] = useState("");
@@ -143,7 +148,7 @@ export default function AssessmentForm() {
       }
       return [...prev, current];
     });
-    setCurrent(emptyResponse(current.code));
+    setCurrent(emptyResponse(current.code, defaultPoint));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -483,7 +488,7 @@ export default function AssessmentForm() {
               )
             ) {
               setSaved([]);
-              setCurrent(emptyResponse());
+              setCurrent(emptyResponse("", defaultPoint));
             }
           }}
           disabled={!canExport}

@@ -1,9 +1,13 @@
 import Link from "next/link";
 import AssessmentForm from "./AssessmentForm";
 import { course, sourceDocs } from "@/lib/course";
-import { domains, scale } from "@/lib/assessment";
+import { defaultAssessmentPoint, domains, scale } from "@/lib/assessment";
 
 export const metadata = { title: "Pre/Post Assessment" };
+
+// The preselected assessment point depends on the date, so the page cannot be
+// baked once at build time.
+export const revalidate = 3600;
 
 export default function Assessment() {
   const assessmentDoc = sourceDocs[1];
@@ -92,7 +96,7 @@ export default function Assessment() {
         </table>
       </div>
 
-      <AssessmentForm />
+      <AssessmentForm defaultPoint={defaultAssessmentPoint()} />
 
       <h2>Instructor use: scoring and comparison</h2>
       <p className="noprint">

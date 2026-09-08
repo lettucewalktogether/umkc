@@ -134,3 +134,26 @@ export const domains: Domain[] = [
     possible: "2-14",
   },
 ];
+
+/**
+ * The assessment is administered twice. Before this date the form preselects
+ * the pre-assessment; from this date on it preselects the post-assessment.
+ * Students can still change the selection, so this is a default and not a
+ * lock. The date is read in the class's own timezone rather than UTC, which
+ * would flip it six hours early.
+ */
+export const POST_ASSESSMENT_FROM = "2026-12-01";
+
+const CLASS_TIME_ZONE = "America/Chicago";
+
+/** Which assessment point the form should preselect. */
+export function defaultAssessmentPoint(now: Date = new Date()): "Pre" | "Post" {
+  // en-CA formats as YYYY-MM-DD, so the dates compare correctly as strings.
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: CLASS_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+  return today >= POST_ASSESSMENT_FROM ? "Post" : "Pre";
+}
