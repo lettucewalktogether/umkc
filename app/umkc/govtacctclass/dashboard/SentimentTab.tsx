@@ -169,7 +169,7 @@ export default function SentimentTab({
       "Class code",
       "Student ID",
       "Item",
-      "VADER compound",
+      "Tone score",
       "Label",
       "Hedging markers",
       "Certainty markers",
@@ -196,13 +196,12 @@ export default function SentimentTab({
   return (
     <>
       <div className="panel">
-        <span className="label">Computed automatically</span>
+        <span className="label">How this works</span>
         <p>
           {scored.length} written response{scored.length === 1 ? "" : "s"}{" "}
-          scored with VADER <Cite k="hutto2014" />, a rule-based lexicon model
-          that accounts for negation, degree modifiers, punctuation, and
-          capitalisation. Nothing is set by hand, and every figure recomputes
-          from whatever has been submitted.
+          scored automatically for tone by VADER <Cite k="hutto2014" />, a
+          word-list method that also reads negations, intensifiers, and
+          punctuation. Nothing is set by hand.
         </p>
       </div>
 
@@ -212,13 +211,13 @@ export default function SentimentTab({
         </button>
       </div>
 
-      <h3>Distribution</h3>
+      <h3>Tone</h3>
       <p>
-        Mean compound score is <strong>{fmt(mean(compounds), 3)}</strong>{" "}
-        (median {fmt(median(compounds), 3)}, SD{" "}
-        {compounds.length > 1 ? fmt(sd(compounds), 3) : "—"}) on VADER&rsquo;s
-        normalised &minus;1 to +1 range, using its published thresholds of
-        &plusmn;0.05 to label a response.
+        Tone is scored from &minus;1 (very negative) through 0 (neutral) to +1
+        (very positive). The average across all responses is{" "}
+        <strong>{fmt(mean(compounds), 2)}</strong> (middle value{" "}
+        {fmt(median(compounds), 2)}). Anything between &minus;0.05 and +0.05
+        counts as neutral.
       </p>
       <div className="tablewrap">
         <table>
@@ -243,14 +242,22 @@ export default function SentimentTab({
         </table>
       </div>
 
-      <h3>Epistemic stance</h3>
+      <h3>How sure students sound</h3>
       <p>
-        {hedged} response{hedged === 1 ? "" : "s"} (
-        {Math.round((hedged / scored.length) * 100)}%) carry a hedge and{" "}
-        {committed} ({Math.round((committed / scored.length) * 100)}%) carry a
-        certainty marker. In confidence explanations this usually says more
-        than affect does: the writing carries little emotion either way, so a
-        neutral sentiment score is the norm rather than a finding.
+        {hedged} of {scored.length} response
+        {scored.length === 1 ? "" : "s"} (
+        {Math.round((hedged / scored.length) * 100)}%) use uncertain wording
+        such as &ldquo;maybe&rdquo;, &ldquo;I think&rdquo; or &ldquo;not
+        sure&rdquo;. {committed} (
+        {Math.round((committed / scored.length) * 100)}%) use definite wording
+        such as &ldquo;definitely&rdquo;, &ldquo;I know&rdquo; or &ldquo;I can
+        explain&rdquo;.
+      </p>
+      <p>
+        This is usually the more useful number. Students explaining a
+        confidence rating rarely write with much feeling either way, so most
+        responses score as neutral on tone &mdash; that is normal, and not a
+        result in itself.
       </p>
 
       <h3>By item</h3>
@@ -260,9 +267,9 @@ export default function SentimentTab({
             <tr>
               <th>Item</th>
               <th className="num">Responses</th>
-              <th className="num">Mean compound</th>
-              <th className="num">Hedged</th>
-              <th className="num">Committed</th>
+              <th className="num">Average tone</th>
+              <th className="num">Uncertain wording</th>
+              <th className="num">Definite wording</th>
             </tr>
           </thead>
           <tbody>
@@ -299,7 +306,7 @@ export default function SentimentTab({
             <tr>
               <th>Domain</th>
               <th className="num">Responses</th>
-              <th className="num">Mean compound</th>
+              <th className="num">Average tone</th>
             </tr>
           </thead>
           <tbody>
@@ -329,12 +336,12 @@ export default function SentimentTab({
       </div>
 
       <div className="panel warn">
-        <span className="label">Limits of the model</span>
+        <span className="label">Treat tone loosely</span>
         <p>
-          VADER was validated on social-media text, not academic
-          self-explanation, so its lexicon only partly matches this corpus{" "}
-          <Cite k="hutto2014" />. Treat the compound score as a rough signal
-          and the hedging counts as the more reliable one.
+          The word list behind these scores was built from social media, not
+          from students explaining coursework <Cite k="hutto2014" />, so the
+          tone figure is a rough signal. The wording counts above are the more
+          dependable of the two.
         </p>
       </div>
     </>
