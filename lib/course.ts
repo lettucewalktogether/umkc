@@ -22,6 +22,20 @@ export const course = {
 export const classCode =
   process.env.NEXT_PUBLIC_CLASS_CODE?.trim() || "UMKC-GOVTACCT-HUBER";
 
+/** The class's own timezone. Dates are decided here, never in UTC. */
+export const CLASS_TIME_ZONE = "America/Chicago";
+
+/** Today's date in the class timezone, as YYYY-MM-DD. */
+export function classToday(now: Date = new Date()): string {
+  // en-CA formats as YYYY-MM-DD, so these compare correctly as strings.
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: CLASS_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+}
+
 /**
  * The references support the dashboard's methods, so they live under it. Public
  * even so: the middleware gates the dashboard page itself, not this subtree,

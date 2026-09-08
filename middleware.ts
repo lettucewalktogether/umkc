@@ -16,5 +16,11 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/umkc/govtacctclass/dashboard"],
+  // Exact paths, not a prefix: /dashboard/references is deliberately public
+  // so citations resolve for anyone. Every page showing student data must be
+  // listed here explicitly.
+  matcher: [
+    "/umkc/govtacctclass/dashboard",
+    "/umkc/govtacctclass/dashboard/archive",
+  ],
 };

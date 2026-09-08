@@ -1075,3 +1075,22 @@ button.section.on {
 button.section.on .section-count {
   color: var(--text-muted);
 }
+
+/* A link that reads as a button, for navigating out of the dashboard. */
+.buttonlink {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  color: var(--text);
+  padding: 0.45rem 0.8rem;
+  font-weight: 550;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.buttonlink:hover {
+  background: var(--bg-sunken);
+  text-decoration: none;
+}

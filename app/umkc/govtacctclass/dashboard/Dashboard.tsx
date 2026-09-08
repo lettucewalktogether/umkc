@@ -1,12 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import TeamScores from "./TeamScores";
 import QuantTab from "./QuantTab";
 import QualTab from "./QualTab";
 import SentimentTab from "./SentimentTab";
 import MethodsTab from "./MethodsTab";
-import { classCode } from "@/lib/course";
+import CompletionTab from "./CompletionTab";
+import { classCode, course } from "@/lib/course";
+import { cohortLabel, type Cohort } from "@/lib/cohorts";
 import { type Coding } from "@/lib/coding";
 import {
   dedupeAssessment,
@@ -27,6 +29,7 @@ const SECTIONS = [
 type SectionKey = (typeof SECTIONS)[number]["key"];
 
 const ASSESSMENT_TABS = [
+  { key: "completion", label: "Completion" },
   { key: "quant", label: "Quantitative" },
   { key: "qual", label: "Qualitative" },
   { key: "sentiment", label: "Sentiment" },
@@ -38,14 +41,29 @@ const CODING_KEY = "umkc-govtacct-coding-v1";
 
 type LoadedFile = { name: string; kind: string; rows: number };
 
+/** One stored submission, as the API returns it. */
+type SubmittedFile = {
+  pathname: string;
+  kind: "eval" | "assessment";
+  cohort: string;
+  uploadedAt: string;
+  csv: string;
+};
+
+/** Shown in the cohort filter when submissions span more than one. */
+const ALL_COHORTS = "__all__";
+
 export default function Dashboard() {
   const [section, setSection] = useState<SectionKey>("assessment");
   const [assessmentTab, setAssessmentTab] =
-    useState<AssessmentTabKey>("quant");
-  const [evalRecords, setEvalRecords] = useState<EvalRecord[]>([]);
-  const [assessmentRecords, setAssessmentRecords] = useState<
+    useState<AssessmentTabKey>("completion");
+  const [uploadedEval, setUploadedEval] = useState<EvalRecord[]>([]);
+  const [uploadedAssessment, setUploadedAssessment] = useState<
     AssessmentRecord[]
   >([]);
+  const [submittedFiles, setSubmittedFiles] = useState<SubmittedFile[]>([]);
+  const [cohorts, setCohorts] = useState<Cohort[]>([]);
+  const [cohortFilter, setCohortFilter] = useState<string>(ALL_COHORTS);
   const [files, setFiles] = useState<LoadedFile[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [onlyComplete, setOnlyComplete] = useState(false);
@@ -54,7 +72,7 @@ export default function Dashboard() {
   const [submitStatus, setSubmitStatus] = useState<
     "loading" | "ready" | "error"
   >("loading");
-  const [submittedCount, setSubmittedCount] = useState(0);
+
 
   // Coding is slow to redo, so it persists in this browser between sessions.
   useEffect(() => {
@@ -87,24 +105,11 @@ export default function Dashboard() {
         return;
       }
       const data = (await res.json()) as {
-        files?: { pathname: string; csv: string }[];
+        cohorts?: Cohort[];
+        files?: SubmittedFile[];
       };
-      const files = data.files ?? [];
-      const evalRows = files.flatMap((f) =>
-        detectKind(f.csv) === "eval" ? parseEvalCsv(f.csv) : [],
-      );
-      const assessmentRows = files.flatMap((f) =>
-        detectKind(f.csv) === "assessment" ? parseAssessmentCsv(f.csv) : [],
-      );
-      setSubmittedCount(files.length);
-      if (evalRows.length) {
-        setEvalRecords((prev) => dedupeEval([...prev, ...evalRows]));
-      }
-      if (assessmentRows.length) {
-        setAssessmentRecords((prev) =>
-          dedupeAssessment([...prev, ...assessmentRows]),
-        );
-      }
+      setCohorts(data.cohorts ?? []);
+      setSubmittedFiles(data.files ?? []);
       setSubmitStatus("ready");
     } catch {
       setSubmitStatus("error");
@@ -115,24 +120,29 @@ export default function Dashboard() {
     void loadSubmitted();
   }, [loadSubmitted]);
 
-  async function clearSubmitted() {
+  /** Sets a cohort aside. Nothing is deleted; the archive page still has it. */
+  async function archive(kind: "eval" | "assessment", cohort: string | null) {
+    const what =
+      kind === "eval" ? "presentation evaluations" : "assessment responses";
+    const where = cohort ? cohortLabel(cohorts, cohort) : "every cohort";
     if (
       !window.confirm(
-        "Permanently delete every submitted evaluation and assessment from the server? Export anything you still need first. Files you loaded by hand are not affected.",
+        `Archive the ${what} for ${where}? They leave this dashboard but stay readable on the archive page.`,
       )
     ) {
       return;
     }
     try {
-      const res = await fetch("/umkc/govtacctclass/api/submissions", { method: "DELETE" });
+      const res = await fetch("/umkc/govtacctclass/api/submissions", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ from: "active", to: "archived", kind, cohort }),
+      });
       if (!res.ok) {
         setSubmitStatus("error");
         return;
       }
-      setSubmittedCount(0);
-      setEvalRecords([]);
-      setAssessmentRecords([]);
-      setSubmitStatus("ready");
+      await loadSubmitted();
     } catch {
       setSubmitStatus("error");
     }
@@ -171,16 +181,54 @@ export default function Dashboard() {
     }
 
     if (newEval.length) {
-      setEvalRecords((prev) => dedupeEval([...prev, ...newEval]));
+      setUploadedEval((prev) => dedupeEval([...prev, ...newEval]));
     }
     if (newAssessment.length) {
-      setAssessmentRecords((prev) =>
+      setUploadedAssessment((prev) =>
         dedupeAssessment([...prev, ...newAssessment]),
       );
     }
     setFiles((prev) => [...prev, ...nextFiles]);
     setErrors(nextErrors);
   }
+
+  const visibleFiles = useMemo(
+    () =>
+      submittedFiles.filter(
+        (f) => cohortFilter === ALL_COHORTS || f.cohort === cohortFilter,
+      ),
+    [submittedFiles, cohortFilter],
+  );
+
+  const evalRecords = useMemo(
+    () =>
+      dedupeEval([
+        ...visibleFiles.flatMap((f) =>
+          f.kind === "eval" ? parseEvalCsv(f.csv) : [],
+        ),
+        ...uploadedEval,
+      ]),
+    [visibleFiles, uploadedEval],
+  );
+
+  const assessmentRecords = useMemo(
+    () =>
+      dedupeAssessment([
+        ...visibleFiles.flatMap((f) =>
+          f.kind === "assessment" ? parseAssessmentCsv(f.csv) : [],
+        ),
+        ...uploadedAssessment,
+      ]),
+    [visibleFiles, uploadedAssessment],
+  );
+
+  /** Cohorts that actually have submissions, newest window first. */
+  const presentCohorts = useMemo(() => {
+    const ids = [...new Set(submittedFiles.map((f) => f.cohort))];
+    return ids.sort((a, b) => cohortLabel(cohorts, a).localeCompare(cohortLabel(cohorts, b)));
+  }, [submittedFiles, cohorts]);
+
+  const submittedCount = visibleFiles.length;
 
   const foreignCodes = [
     ...new Set(
@@ -203,15 +251,30 @@ export default function Dashboard() {
               ? "Checking submissions\u2026"
               : "Refresh submissions"}
           </button>
-          <button
-            type="button"
-            className="danger"
-            onClick={clearSubmitted}
-            disabled={submittedCount === 0}
-          >
-            Delete all submissions
-          </button>
+          <a className="buttonlink" href={`${course.basePath}/dashboard/archive`}>
+            Open archive
+          </a>
         </div>
+
+        {presentCohorts.length > 0 && (
+          <label className="field">
+            <span>Cohort</span>
+            <select
+              value={cohortFilter}
+              onChange={(e) => setCohortFilter(e.target.value)}
+            >
+              <option value={ALL_COHORTS}>
+                All cohorts ({submittedFiles.length})
+              </option>
+              {presentCohorts.map((id) => (
+                <option key={id} value={id}>
+                  {cohortLabel(cohorts, id)} (
+                  {submittedFiles.filter((f) => f.cohort === id).length})
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <p className={submitStatus === "error" ? "status incomplete" : "status"}>
           {submitStatus === "loading" &&
             "Loading submitted evaluations and assessments\u2026"}
@@ -311,8 +374,8 @@ export default function Dashboard() {
             type="button"
             className="danger"
             onClick={() => {
-              setEvalRecords([]);
-              setAssessmentRecords([]);
+              setUploadedEval([]);
+              setUploadedAssessment([]);
               setFiles([]);
               setErrors([]);
             }}
@@ -360,6 +423,21 @@ export default function Dashboard() {
             </p>
           </div>
 
+          <div className="buttonrow">
+            <button
+              type="button"
+              onClick={() =>
+                void archive(
+                  "assessment",
+                  cohortFilter === ALL_COHORTS ? null : cohortFilter,
+                )
+              }
+              disabled={assessmentRecords.length === 0}
+            >
+              Archive these assessment responses
+            </button>
+          </div>
+
           <nav className="tabs" aria-label="Class assessment views">
             {ASSESSMENT_TABS.map((t) => (
               <button
@@ -375,6 +453,12 @@ export default function Dashboard() {
           </nav>
 
           <div className="tabpanel">
+            {assessmentTab === "completion" && (
+              <CompletionTab
+                records={assessmentRecords}
+                cohort={cohortFilter === ALL_COHORTS ? null : cohortFilter}
+              />
+            )}
             {assessmentTab === "quant" && (
               <QuantTab records={assessmentRecords} />
             )}
@@ -402,6 +486,21 @@ export default function Dashboard() {
               from the evaluations students submitted. Nothing on this
               dashboard comes from the class assessment.
             </p>
+          </div>
+
+          <div className="buttonrow">
+            <button
+              type="button"
+              onClick={() =>
+                void archive(
+                  "eval",
+                  cohortFilter === ALL_COHORTS ? null : cohortFilter,
+                )
+              }
+              disabled={evalRecords.length === 0}
+            >
+              Archive these presentation evaluations
+            </button>
           </div>
 
           <TeamScores

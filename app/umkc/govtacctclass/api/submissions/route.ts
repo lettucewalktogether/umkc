@@ -1,29 +1,35 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { del, get, list, put } from "@vercel/blob";
 import { SESSION_COOKIE, isValidSession, safeEqual } from "@/lib/auth";
 import { detectKind, parseEvalCsv } from "@/lib/dashboard";
 import { parseCsv, toCsv } from "@/lib/csv";
+import { cohortForDate, segment, UNASSIGNED_COHORT } from "@/lib/cohorts";
+import {
+  isKind,
+  isStage,
+  listSubmissions,
+  moveSubmissions,
+  putSubmission,
+  readCohorts,
+  type Stage,
+} from "@/lib/submissions";
 
 /**
- * Student submissions, for both the evaluation score sheet and the pre/post
- * assessment.
+ * Student submissions for both instruments.
  *
  * POST takes the same CSV the page exports, gated by the shared class
- * passcode. Storing the export verbatim keeps one parsing path in the
- * dashboard and lets its existing dedupe apply unchanged.
+ * passcode, and files it under the cohort whose window covers today. Storing
+ * the export verbatim keeps one parsing path in the dashboard.
  *
- * GET returns every submission to a signed-in instructor, using the session
- * cookie that already guards the dashboard. DELETE clears them, since
- * submissions are kept only until grades are posted.
+ * GET returns one stage to a signed-in instructor. PATCH moves submissions
+ * between stages. There is no destructive operation: the archive's "delete"
+ * is a move to the deep stage.
  */
 
 export const runtime = "nodejs";
 // Submissions must be readable immediately after they are written.
 export const dynamic = "force-dynamic";
 
-const EVAL_PREFIX = "eval/";
-const ASSESSMENT_PREFIX = "assessment/";
 const MAX_BYTES = 512 * 1024;
 
 function classPasscode(): string | null {
@@ -31,22 +37,10 @@ function classPasscode(): string | null {
   return value ? value : null;
 }
 
-/** Filesystem-safe path segment. */
-function segment(value: string, fallback: string): string {
-  const s = value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
-  return s || fallback;
+async function requireInstructor(): Promise<boolean> {
+  const store = await cookies();
+  return isValidSession(store.get(SESSION_COOKIE)?.value);
 }
-
-const blobOptions = {
-  access: "private",
-  contentType: "text/csv; charset=utf-8",
-  allowOverwrite: true,
-  addRandomSuffix: false,
-} as const;
 
 export async function POST(request: Request) {
   const passcode = classPasscode();
@@ -83,16 +77,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Submission too large." }, { status: 413 });
   }
 
+  // Whichever cohort's window covers today owns this submission.
+  const cohort =
+    cohortForDate(await readCohorts())?.id ?? UNASSIGNED_COHORT;
+
   const kind = detectKind(csv);
-  if (kind === "eval") return submitEval(csv);
-  if (kind === "assessment") return submitAssessment(csv);
+  if (kind === "eval") return submitEval(csv, cohort);
+  if (kind === "assessment") return submitAssessment(csv, cohort);
   return NextResponse.json(
     { error: "That is not an export from the scoring or assessment page." },
     { status: 400 },
   );
 }
 
-async function submitEval(csv: string) {
+async function submitEval(csv: string, cohort: string) {
   const records = parseEvalCsv(csv);
   const studentId = records[0]?.evaluator?.trim();
   if (!studentId) {
@@ -101,22 +99,27 @@ async function submitEval(csv: string) {
       { status: 400 },
     );
   }
-  const cls = records[0]?.classCode?.trim() ?? "";
 
-  // One blob per student: resubmitting replaces that student's own scores
-  // rather than accumulating duplicates.
-  await put(
-    `${EVAL_PREFIX}${segment(cls, "class")}/${segment(studentId, "student")}.csv`,
+  // One blob per student per cohort: resubmitting replaces that student's own
+  // scores rather than accumulating duplicates.
+  await putSubmission(
+    "active",
+    "eval",
+    cohort,
+    `${segment(studentId, "student")}.csv`,
     csv,
-    blobOptions,
   );
-  return NextResponse.json({ ok: true, kind: "eval", rows: records.length });
+  return NextResponse.json({
+    ok: true,
+    kind: "eval",
+    cohort,
+    rows: records.length,
+  });
 }
 
-async function submitAssessment(csv: string) {
+async function submitAssessment(csv: string, cohort: string) {
   const rows = parseCsv(csv);
   const header = rows[0] ?? [];
-  const iClass = header.indexOf("Class code");
   const iCode = (() => {
     const i = header.indexOf("Student ID");
     return i >= 0 ? i : header.indexOf("Anonymous matching code");
@@ -151,64 +154,104 @@ async function submitAssessment(csv: string) {
   }
 
   // Keyed by student ID AND point, so submitting the post-assessment never
-  // overwrites the pre-assessment the pairing depends on.
+  // overwrites the pre it has to be paired against.
   await Promise.all(
-    body.map((row) => {
-      const cls = iClass >= 0 ? (row[iClass] ?? "") : "";
-      const code = segment(row[iCode] ?? "", "code");
-      const point = segment(row[iPoint] ?? "", "point");
-      return put(
-        `${ASSESSMENT_PREFIX}${segment(cls, "class")}/${code}--${point}.csv`,
+    body.map((row) =>
+      putSubmission(
+        "active",
+        "assessment",
+        cohort,
+        `${segment(row[iCode] ?? "", "student")}--${segment(
+          row[iPoint] ?? "",
+          "point",
+        )}.csv`,
         toCsv([header, row]),
-        blobOptions,
-      );
-    }),
-  );
-
-  return NextResponse.json({ ok: true, kind: "assessment", rows: body.length });
-}
-
-async function requireInstructor(): Promise<boolean> {
-  const store = await cookies();
-  return isValidSession(store.get(SESSION_COOKIE)?.value);
-}
-
-export async function GET() {
-  if (!(await requireInstructor())) {
-    return NextResponse.json({ error: "Not authorized." }, { status: 401 });
-  }
-
-  const prefixes = [EVAL_PREFIX, ASSESSMENT_PREFIX];
-  const listed = await Promise.all(
-    prefixes.map((prefix) => list({ prefix, limit: 1000 })),
-  );
-  const blobs = listed.flatMap((l) => l.blobs);
-
-  const files = await Promise.all(
-    blobs.map(async (b) => {
-      const result = await get(b.pathname, { access: "private" });
-      return {
-        pathname: b.pathname,
-        uploadedAt: b.uploadedAt,
-        csv: result ? await new Response(result.stream).text() : "",
-      };
-    }),
-  );
-
-  return NextResponse.json({ files });
-}
-
-export async function DELETE() {
-  if (!(await requireInstructor())) {
-    return NextResponse.json({ error: "Not authorized." }, { status: 401 });
-  }
-
-  const listed = await Promise.all(
-    [EVAL_PREFIX, ASSESSMENT_PREFIX].map((prefix) =>
-      list({ prefix, limit: 1000 }),
+      ),
     ),
   );
-  const paths = listed.flatMap((l) => l.blobs.map((b) => b.pathname));
-  if (paths.length) await del(paths);
-  return NextResponse.json({ ok: true, deleted: paths.length });
+
+  return NextResponse.json({
+    ok: true,
+    kind: "assessment",
+    cohort,
+    rows: body.length,
+  });
+}
+
+export async function GET(request: Request) {
+  if (!(await requireInstructor())) {
+    return NextResponse.json({ error: "Not authorized." }, { status: 401 });
+  }
+
+  const params = new URL(request.url).searchParams;
+  const stageParam = params.get("stage") ?? "active";
+  if (!isStage(stageParam)) {
+    return NextResponse.json({ error: "Unknown stage." }, { status: 400 });
+  }
+  const kindParam = params.get("kind");
+  if (kindParam !== null && !isKind(kindParam)) {
+    return NextResponse.json({ error: "Unknown kind." }, { status: 400 });
+  }
+
+  const [files, cohorts] = await Promise.all([
+    listSubmissions(stageParam, kindParam ?? undefined),
+    readCohorts(),
+  ]);
+
+  return NextResponse.json({ stage: stageParam, cohorts, files });
+}
+
+/**
+ * Moves submissions between stages. Used to archive a finished cohort and,
+ * from the archive page, to move a batch out of sight into deep.
+ */
+export async function PATCH(request: Request) {
+  if (!(await requireInstructor())) {
+    return NextResponse.json({ error: "Not authorized." }, { status: 401 });
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Malformed request." }, { status: 400 });
+  }
+  const payload = (body ?? {}) as {
+    to?: unknown;
+    pathnames?: unknown;
+    from?: unknown;
+    kind?: unknown;
+    cohort?: unknown;
+  };
+
+  const to = payload.to;
+  if (!isStage(to) || to === "active") {
+    return NextResponse.json(
+      { error: "Move submissions to 'archived' or 'deep'." },
+      { status: 400 },
+    );
+  }
+
+  // Either an explicit list of paths, or every file in one stage/kind/cohort.
+  let pathnames: string[];
+  if (Array.isArray(payload.pathnames)) {
+    pathnames = payload.pathnames.map(String);
+  } else {
+    const from = payload.from ?? "active";
+    if (!isStage(from)) {
+      return NextResponse.json({ error: "Unknown stage." }, { status: 400 });
+    }
+    const kind = payload.kind;
+    if (!isKind(kind)) {
+      return NextResponse.json({ error: "Unknown kind." }, { status: 400 });
+    }
+    const cohort = payload.cohort ? String(payload.cohort) : null;
+    const all = await listSubmissions(from as Stage, kind);
+    pathnames = all
+      .filter((f) => !cohort || f.cohort === cohort)
+      .map((f) => f.pathname);
+  }
+
+  const { moved } = await moveSubmissions(pathnames, to);
+  return NextResponse.json({ ok: true, to, moved });
 }

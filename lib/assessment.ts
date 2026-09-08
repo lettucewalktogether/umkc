@@ -1,3 +1,4 @@
+import { classToday } from "@/lib/course";
 /**
  * The pre/post confidence instrument, shared by the assessment page and its
  * interactive form.
@@ -144,16 +145,7 @@ export const domains: Domain[] = [
  */
 export const POST_ASSESSMENT_FROM = "2026-12-01";
 
-const CLASS_TIME_ZONE = "America/Chicago";
-
 /** Which assessment point the form should preselect. */
 export function defaultAssessmentPoint(now: Date = new Date()): "Pre" | "Post" {
-  // en-CA formats as YYYY-MM-DD, so the dates compare correctly as strings.
-  const today = new Intl.DateTimeFormat("en-CA", {
-    timeZone: CLASS_TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(now);
-  return today >= POST_ASSESSMENT_FROM ? "Post" : "Pre";
+  return classToday(now) >= POST_ASSESSMENT_FROM ? "Post" : "Pre";
 }
