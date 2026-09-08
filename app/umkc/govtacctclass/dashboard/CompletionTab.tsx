@@ -100,7 +100,9 @@ export default function CompletionTab({ records, cohort }: Props) {
   const offRoster = rows.filter((r) => !r.onRoster && roster.length > 0);
 
   function label(r: Row): string {
-    return r.submitted ? "Submitted" : "Not submitted";
+    if (r.submitted) return "Submitted";
+    // Only reachable for a roster entry: a non-submitter has no record.
+    return "Not submitted (on roster, nothing received)";
   }
 
   return (
@@ -110,12 +112,19 @@ export default function CompletionTab({ records, cohort }: Props) {
         <p className="saved-empty">
           No assessment responses yet, and no roster to compare against.
         </p>
+      ) : roster.length === 0 ? (
+        <p>
+          {done} {done === 1 ? "student has" : "students have"} submitted the
+          assessment. <strong>Who has not submitted is unknown</strong>: a
+          student who did nothing appears nowhere in the data. Add the roster
+          below and this becomes answerable.
+        </p>
       ) : (
         <p>
-          {done} of {rows.length}{" "}
-          {rows.length === 1 ? "student has" : "students have"} completed the
-          assessment. {missing.length}{" "}
-          {missing.length === 1 ? "has" : "have"} not submitted.
+          {done} of {roster.length} on the roster{" "}
+          {done === 1 ? "has" : "have"} submitted. {missing.length}{" "}
+          {missing.length === 1 ? "has" : "have"} not, counted against the
+          roster you saved for this cohort.
         </p>
       )}
 

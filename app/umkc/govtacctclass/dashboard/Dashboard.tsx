@@ -89,14 +89,11 @@ export default function Dashboard() {
       setCohorts(data.cohorts ?? []);
       setSubmittedFiles(files);
       // Open on the cohort running today rather than on everything ever
-      // collected. Fall back to all only when today's cohort has nothing yet.
-      setCohortFilter((prev) => {
-        if (prev !== ALL_COHORTS) return prev;
-        const current = data.current;
-        return current && files.some((f) => f.cohort === current)
-          ? current
-          : ALL_COHORTS;
-      });
+      // collected. Only when no cohort window covers today does it fall back
+      // to showing all of them.
+      setCohortFilter((prev) =>
+        prev === ALL_COHORTS ? (data.current ?? ALL_COHORTS) : prev,
+      );
       setSubmitStatus("ready");
     } catch {
       setSubmitStatus("error");
@@ -245,11 +242,15 @@ export default function Dashboard() {
     [visibleFiles, uploadedAssessment],
   );
 
-  /** Cohorts that actually have submissions, newest window first. */
+  /** Cohorts to offer: any with submissions, plus whichever is selected even
+   *  when it is empty, so the current run is always reachable. */
   const presentCohorts = useMemo(() => {
-    const ids = [...new Set(submittedFiles.map((f) => f.cohort))];
-    return ids.sort((a, b) => cohortLabel(cohorts, a).localeCompare(cohortLabel(cohorts, b)));
-  }, [submittedFiles, cohorts]);
+    const ids = new Set(submittedFiles.map((f) => f.cohort));
+    if (cohortFilter !== ALL_COHORTS) ids.add(cohortFilter);
+    return [...ids].sort((a, b) =>
+      cohortLabel(cohorts, a).localeCompare(cohortLabel(cohorts, b)),
+    );
+  }, [submittedFiles, cohorts, cohortFilter]);
 
   const submittedCount = visibleFiles.length;
 
@@ -287,14 +288,18 @@ export default function Dashboard() {
               onChange={(e) => setCohortFilter(e.target.value)}
             >
               <option value={ALL_COHORTS}>
-                All cohorts ({submittedFiles.length})
+                All cohorts &mdash; {submittedFiles.length}{" "}
+                {submittedFiles.length === 1 ? "submission" : "submissions"}
               </option>
-              {presentCohorts.map((id) => (
-                <option key={id} value={id}>
-                  {cohortLabel(cohorts, id)} (
-                  {submittedFiles.filter((f) => f.cohort === id).length})
-                </option>
-              ))}
+              {presentCohorts.map((id) => {
+                const n = submittedFiles.filter((f) => f.cohort === id).length;
+                return (
+                  <option key={id} value={id}>
+                    {cohortLabel(cohorts, id)} &mdash; {n}{" "}
+                    {n === 1 ? "submission" : "submissions"}
+                  </option>
+                );
+              })}
             </select>
           </label>
         )}
