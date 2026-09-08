@@ -29,7 +29,6 @@ export type AssessmentRecord = {
   classCode: string;
   code: string;
   point: "Pre" | "Post" | "";
-  team: string;
   date: string;
   ratings: (number | null)[];
   explanations: string[];
@@ -93,7 +92,6 @@ export function parseAssessmentCsv(text: string): AssessmentRecord[] {
       classCode: r["Class code"] ?? "",
       code: r["Student ID"] ?? r["Anonymous matching code"] ?? "",
       point,
-      team: r["Vendor Team"] ?? "",
       date: r["Date"] ?? "",
       ratings,
       explanations,

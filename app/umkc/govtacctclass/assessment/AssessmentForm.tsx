@@ -11,7 +11,6 @@ type Response = {
   id: string;
   point: "Pre" | "Post" | "";
   code: string;
-  team: string;
   date: string;
   answers: Answer[];
 };
@@ -23,7 +22,6 @@ function emptyResponse(code = "", point: Response["point"] = ""): Response {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     point,
     code,
-    team: "",
     date: today(),
     answers: questions.map(() => ({ rating: null, explanation: "" })),
   };
@@ -49,7 +47,6 @@ function csvRows(responses: Response[]): (string | number)[][] {
     "Class code",
     "Student ID",
     "Assessment point",
-    "Vendor Team",
     "Date",
     ...questions.flatMap((q, i) => [
       `Q${i + 1} rating (1-7)`,
@@ -63,7 +60,6 @@ function csvRows(responses: Response[]): (string | number)[][] {
     classCode,
     r.code,
     r.point,
-    r.team,
     r.date,
     ...r.answers.flatMap((a) => [a.rating ?? "", a.explanation]),
     ...domains.map((d) => subtotal(r, d) ?? ""),
@@ -241,17 +237,6 @@ export default function AssessmentForm({
             }
             placeholder="The same ID both times"
             autoComplete="off"
-          />
-        </label>
-        <label className="field">
-          <span>Vendor Team</span>
-          <input
-            type="text"
-            value={current.team}
-            onChange={(e) =>
-              setCurrent((p) => ({ ...p, team: e.target.value }))
-            }
-            placeholder="Team name or number"
           />
         </label>
         <label className="field">
