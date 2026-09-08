@@ -21,10 +21,13 @@ export function downloadCsv(filename: string, csv: string): void {
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;
+  a.rel = "noopener";
   document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  a.remove();
+  // Revoking in the same tick can cancel the save in some browsers, which
+  // shows as a click that silently does nothing.
+  window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
 }
 
 /** File-name-safe slug, e.g. "Team 3 / A" -> "team-3-a". */

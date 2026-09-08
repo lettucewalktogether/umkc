@@ -50,6 +50,28 @@ export default function CompletionTab({ records, cohort }: Props) {
     void loadRoster();
   }, [loadRoster]);
 
+  /** IDs that have submitted but are not yet on the roster. */
+  const submittedNotOnRoster = useMemo(() => {
+    const listed = new Set(
+      draft
+        .split(/[\n,;\t]+/)
+        .map((x) => x.trim().toLowerCase())
+        .filter(Boolean),
+    );
+    const ids = new Set<string>();
+    for (const r of records) {
+      const id = r.code.trim();
+      if (id && !listed.has(id.toLowerCase())) ids.add(id);
+    }
+    return [...ids].sort((a, b) => a.localeCompare(b));
+  }, [records, draft]);
+
+  function addSubmitted() {
+    const lines = draft.trim() ? draft.trimEnd().split(/\n/) : [];
+    setDraft([...lines, ...submittedNotOnRoster].join("\n"));
+    setStatus("idle");
+  }
+
   async function saveRoster() {
     if (!cohort) return;
     setStatus("saving");
@@ -155,7 +177,11 @@ export default function CompletionTab({ records, cohort }: Props) {
         </p>
       ) : (
         <>
-          <p>Student IDs enrolled in this cohort, one per line.</p>
+          <p>
+            Student IDs enrolled in this cohort, one per line. Everyone who has
+            submitted is already known, so add them here and type in only the
+            students who have not.
+          </p>
           <label className="field">
             <span>Student IDs</span>
             <textarea
@@ -169,6 +195,15 @@ export default function CompletionTab({ records, cohort }: Props) {
             />
           </label>
           <div className="buttonrow">
+            <button
+              type="button"
+              onClick={addSubmitted}
+              disabled={submittedNotOnRoster.length === 0}
+            >
+              {submittedNotOnRoster.length === 0
+                ? "All submitted IDs are listed"
+                : `Add the ${submittedNotOnRoster.length} who submitted`}
+            </button>
             <button
               type="button"
               className="primary"

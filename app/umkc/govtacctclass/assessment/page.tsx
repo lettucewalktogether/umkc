@@ -142,7 +142,7 @@ export default function Assessment() {
 
       <nav className="pagenav">
         <Link href={course.basePath}>&larr; Challenge</Link>
-        <Link href={`${course.basePath}/eval`}>Score a team &rarr;</Link>
+        <Link href={`${course.basePath}/eval`}>Presentation evaluation &rarr;</Link>
       </nav>
     </>
   );

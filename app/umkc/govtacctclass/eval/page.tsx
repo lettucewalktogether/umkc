@@ -3,14 +3,14 @@ import EvalForm from "./EvalForm";
 import { course } from "@/lib/course";
 import { criteria, totalWeight } from "@/lib/rubric";
 
-export const metadata = { title: "Score a Team" };
+export const metadata = { title: "Presentation Evaluation" };
 
 export default function Evaluate() {
   return (
     <>
       <div className="pagehead">
         <p className="eyebrow">CPD evaluator score sheet</p>
-        <h1>Score a presentation</h1>
+        <h1>Presentation evaluation</h1>
         <p className="lede">
           Score one team against the six published criteria, then export every
           evaluation you have entered as a spreadsheet for the professor to
