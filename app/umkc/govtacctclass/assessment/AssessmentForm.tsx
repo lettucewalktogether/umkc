@@ -47,7 +47,7 @@ function answeredCount(r: Response): number {
 function csvRows(responses: Response[]): (string | number)[][] {
   const header = [
     "Class code",
-    "Anonymous matching code",
+    "Student ID",
     "Assessment point",
     "Vendor Team",
     "Date",
@@ -227,14 +227,14 @@ export default function AssessmentForm() {
           </select>
         </label>
         <label className="field">
-          <span>Anonymous matching code</span>
+          <span>Your student ID</span>
           <input
             type="text"
             value={current.code}
             onChange={(e) =>
               setCurrent((p) => ({ ...p, code: e.target.value }))
             }
-            placeholder="Use the same code both times"
+            placeholder="The same ID both times"
             autoComplete="off"
           />
         </label>

@@ -117,7 +117,10 @@ async function submitAssessment(csv: string) {
   const rows = parseCsv(csv);
   const header = rows[0] ?? [];
   const iClass = header.indexOf("Class code");
-  const iCode = header.indexOf("Anonymous matching code");
+  const iCode = (() => {
+    const i = header.indexOf("Student ID");
+    return i >= 0 ? i : header.indexOf("Anonymous matching code");
+  })();
   const iPoint = header.indexOf("Assessment point");
   if (iCode < 0 || iPoint < 0) {
     return NextResponse.json(
@@ -134,7 +137,7 @@ async function submitAssessment(csv: string) {
   for (const row of body) {
     if (!(row[iCode] ?? "").trim()) {
       return NextResponse.json(
-        { error: "Enter your anonymous matching code before submitting." },
+        { error: "Enter your student ID before submitting." },
         { status: 400 },
       );
     }
@@ -147,7 +150,7 @@ async function submitAssessment(csv: string) {
     }
   }
 
-  // Keyed by matching code AND point, so submitting the post-assessment never
+  // Keyed by student ID AND point, so submitting the post-assessment never
   // overwrites the pre-assessment the pairing depends on.
   await Promise.all(
     body.map((row) => {

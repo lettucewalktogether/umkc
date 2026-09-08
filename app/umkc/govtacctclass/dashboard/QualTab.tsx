@@ -124,7 +124,7 @@ export default function QualTab({
     const rows: (string | number)[][] = [
       [
         "Class code",
-        "Matching code",
+        "Student ID",
         "Assessment point",
         "Question",
         "Response text",

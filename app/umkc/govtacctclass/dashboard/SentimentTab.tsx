@@ -225,7 +225,7 @@ export default function SentimentTab({
     const rows: (string | number)[][] = [
       [
         "Class code",
-        "Matching code",
+        "Student ID",
         "Assessment point",
         "Question",
         "VADER compound",

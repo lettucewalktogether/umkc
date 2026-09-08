@@ -16,8 +16,8 @@ export default function Assessment() {
         <p className="lede">
           Ten identical questions on government accounting, public-service
           process, vendor evaluation, and AI. The same questions are administered
-          before and after the simulation, using the same anonymous matching
-          code.
+          before and after the simulation, identified both times by your student
+          ID.
         </p>
       </div>
 
@@ -44,14 +44,15 @@ export default function Assessment() {
           the class passcode your professor reads out. Your answers go straight
           to the instructor dashboard, so there is no file to hand in. Submit
           the pre-assessment now and the post-assessment later; they are stored
-          separately under your matching code, so the second never replaces the
+          separately under your student ID, so the second never replaces the
           first, and you do not have to return to the same browser.
         </p>
         <p>
-          You are identified only by the anonymous matching code you choose, so
-          reuse exactly the same code both times or the two cannot be paired.
-          <strong> Export to spreadsheet</strong> is still there if you would
-          rather hand in a file, or if submitting fails.
+          Enter your student ID both times so the two can be paired. Your
+          responses are not anonymous to {course.instructor}: she can see who
+          completed each assessment, and they are kept only until grades are
+          posted.<strong> Export to spreadsheet</strong> is still there if you
+          would rather hand in a file, or if submitting fails.
         </p>
         <p>
           You can also print this page for a paper copy, or download the{" "}
@@ -145,9 +146,9 @@ export default function Assessment() {
       </p>
       <p className="noprint">
         Exported CSV files stack cleanly: each student&rsquo;s export is one row
-        per response, with the matching code, assessment point, per-question
+        per response, with the student ID, assessment point, per-question
         ratings and paragraphs, and domain subtotals already calculated. Paste
-        them into one sheet and sort by matching code to place each
+        them into one sheet and sort by student ID to place each
         student&rsquo;s pre and post rows together.
       </p>
 

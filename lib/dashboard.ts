@@ -40,6 +40,7 @@ export type FileKind = "eval" | "assessment" | "unknown";
 export function detectKind(text: string): FileKind {
   const first = text.slice(0, 4000);
   if (first.includes("Team evaluated")) return "eval";
+  if (first.includes("Assessment point")) return "assessment";
   if (first.includes("Anonymous matching code")) return "assessment";
   return "unknown";
 }
@@ -90,7 +91,7 @@ export function parseAssessmentCsv(text: string): AssessmentRecord[] {
       rawPoint === "Pre" || rawPoint === "Post" ? rawPoint : "";
     return {
       classCode: r["Class code"] ?? "",
-      code: r["Anonymous matching code"] ?? "",
+      code: r["Student ID"] ?? r["Anonymous matching code"] ?? "",
       point,
       team: r["Vendor Team"] ?? "",
       date: r["Date"] ?? "",
