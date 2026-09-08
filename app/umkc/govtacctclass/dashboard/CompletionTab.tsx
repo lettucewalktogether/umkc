@@ -19,8 +19,7 @@ type Props = {
 
 type Row = {
   id: string;
-  pre: boolean;
-  post: boolean;
+  submitted: boolean;
   onRoster: boolean;
 };
 
@@ -80,34 +79,28 @@ export default function CompletionTab({ records, cohort }: Props) {
     const key = (id: string) => id.trim().toLowerCase();
 
     for (const id of roster) {
-      byId.set(key(id), { id, pre: false, post: false, onRoster: true });
+      byId.set(key(id), { id, submitted: false, onRoster: true });
     }
     for (const r of records) {
       const id = r.code.trim();
       if (!id) continue;
       const row = byId.get(key(id)) ?? {
         id,
-        pre: false,
-        post: false,
+        submitted: false,
         onRoster: false,
       };
-      if (r.point === "Pre") row.pre = true;
-      if (r.point === "Post") row.post = true;
+      row.submitted = true;
       byId.set(key(id), row);
     }
     return [...byId.values()].sort((a, b) => a.id.localeCompare(b.id));
   }, [records, roster]);
 
-  const done = rows.filter((r) => r.pre && r.post).length;
-  const partial = rows.filter((r) => (r.pre || r.post) && !(r.pre && r.post));
-  const missing = rows.filter((r) => !r.pre && !r.post);
+  const done = rows.filter((r) => r.submitted).length;
+  const missing = rows.filter((r) => !r.submitted);
   const offRoster = rows.filter((r) => !r.onRoster && roster.length > 0);
 
   function label(r: Row): string {
-    if (r.pre && r.post) return "Both";
-    if (r.pre) return "Pre only";
-    if (r.post) return "Post only";
-    return "Nothing submitted";
+    return r.submitted ? "Submitted" : "Not submitted";
   }
 
   return (
@@ -119,9 +112,10 @@ export default function CompletionTab({ records, cohort }: Props) {
         </p>
       ) : (
         <p>
-          {done} of {rows.length} {rows.length === 1 ? "student has" : "students have"}{" "}
-          completed both. {partial.length} started but did not finish, and{" "}
-          {missing.length} submitted nothing.
+          {done} of {rows.length}{" "}
+          {rows.length === 1 ? "student has" : "students have"} completed the
+          assessment. {missing.length}{" "}
+          {missing.length === 1 ? "has" : "have"} not submitted.
         </p>
       )}
 
@@ -139,8 +133,6 @@ export default function CompletionTab({ records, cohort }: Props) {
             <thead>
               <tr>
                 <th>Student ID</th>
-                <th>Pre</th>
-                <th>Post</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -148,8 +140,6 @@ export default function CompletionTab({ records, cohort }: Props) {
               {rows.map((r) => (
                 <tr key={r.id}>
                   <td>{r.id}</td>
-                  <td>{r.pre ? "Yes" : "—"}</td>
-                  <td>{r.post ? "Yes" : "—"}</td>
                   <td>{label(r)}</td>
                 </tr>
               ))}
@@ -170,7 +160,7 @@ export default function CompletionTab({ records, cohort }: Props) {
           <p>
             Paste the student IDs enrolled in this cohort, one per line. Anyone
             listed here who has not submitted shows above as{" "}
-            <strong>Nothing submitted</strong>. Without a roster the table can
+            <strong>Not submitted</strong>. Without a roster the table can
             only show who did submit.
           </p>
           <label className="field">

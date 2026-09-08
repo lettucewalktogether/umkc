@@ -1,4 +1,3 @@
-import { classToday } from "@/lib/course";
 /**
  * The pre/post confidence instrument, shared by the assessment page and its
  * interactive form.
@@ -135,17 +134,3 @@ export const domains: Domain[] = [
     possible: "2-14",
   },
 ];
-
-/**
- * The assessment is administered twice. Before this date the form preselects
- * the pre-assessment; from this date on it preselects the post-assessment.
- * Students can still change the selection, so this is a default and not a
- * lock. The date is read in the class's own timezone rather than UTC, which
- * would flip it six hours early.
- */
-export const POST_ASSESSMENT_FROM = "2026-12-01";
-
-/** Which assessment point the form should preselect. */
-export function defaultAssessmentPoint(now: Date = new Date()): "Pre" | "Post" {
-  return classToday(now) >= POST_ASSESSMENT_FROM ? "Post" : "Pre";
-}

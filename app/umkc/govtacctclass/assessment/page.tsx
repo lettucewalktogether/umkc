@@ -1,13 +1,10 @@
 import Link from "next/link";
 import AssessmentForm from "./AssessmentForm";
 import { course, sourceDocs } from "@/lib/course";
-import { defaultAssessmentPoint, domains, scale } from "@/lib/assessment";
+import { domains, scale } from "@/lib/assessment";
 
-export const metadata = { title: "Pre/Post Assessment" };
+export const metadata = { title: "Assessment" };
 
-// The preselected assessment point depends on the date, so the page cannot be
-// baked once at build time.
-export const revalidate = 3600;
 
 export default function Assessment() {
   const assessmentDoc = sourceDocs[1];
@@ -16,7 +13,7 @@ export default function Assessment() {
     <>
       <div className="pagehead">
         <p className="eyebrow">Government Accounting class</p>
-        <h1>Pre- and post-assessment</h1>
+        <h1>Confidence assessment</h1>
         <p className="lede">
           Ten identical questions on government accounting, public-service
           process, vendor evaluation, and AI. The same questions are administered
@@ -35,9 +32,8 @@ export default function Assessment() {
           classmates, or ask another person to prepare a response.
         </p>
         <p>
-          An uncertain or incomplete response is useful, especially on the
-          pre-assessment. The point is to measure change, not to be right the
-          first time.
+          An uncertain or incomplete response is useful. The point is to
+          record where you actually stand, not to be right.
         </p>
       </div>
 
@@ -46,13 +42,12 @@ export default function Assessment() {
         <p>
           Fill it in below, then use <strong>Submit to instructor</strong> with
           the class passcode your professor reads out. Your answers go straight
-          to the instructor dashboard, so there is no file to hand in. Submit
-          the pre-assessment now and the post-assessment later; they are stored
-          separately under your student ID, so the second never replaces the
-          first, and you do not have to return to the same browser.
+          to the instructor dashboard, so there is no file to hand in.
+          Submitting again replaces what you sent, so a mistake can be
+          corrected.
         </p>
         <p>
-          Enter your student ID both times so the two can be paired.{" "}
+          Enter your student ID so your response can be identified.{" "}
           <strong>Export to spreadsheet</strong> is still there if you would
           rather hand in a file, or if submitting fails.
         </p>
@@ -96,7 +91,7 @@ export default function Assessment() {
         </table>
       </div>
 
-      <AssessmentForm defaultPoint={defaultAssessmentPoint()} />
+      <AssessmentForm />
 
       <h2>Instructor use: scoring and comparison</h2>
       <p className="noprint">
@@ -133,25 +128,16 @@ export default function Assessment() {
         </table>
       </div>
       <p>
-        Recommended analysis: match pre- and post-responses using the anonymous
-        code; calculate change for every item and domain; and review the
-        paragraphs for accurate understanding, applied examples, evidence-based
-        judgment, misconceptions, and remaining questions. Report confidence
-        changes and qualitative findings together. Confidence is self-reported
-        and should not be treated by itself as proof of knowledge.
-      </p>
-      <p>
-        Suggested qualitative coding categories: accurate understanding; partial
-        understanding; misconception; applied example; evidence-based judgment;
-        remaining question; and change attributed to a specific simulation
-        activity.
+        The dashboard summarises every item and domain as responses arrive, and
+        scans the written paragraphs for observable features such as concrete
+        examples and references to records. Read the paragraphs themselves for
+        accuracy: confidence is self-reported and is not by itself proof of
+        knowledge.
       </p>
       <p className="noprint">
         Exported CSV files stack cleanly: each student&rsquo;s export is one row
-        per response, with the student ID, assessment point, per-question
-        ratings and paragraphs, and domain subtotals already calculated. Paste
-        them into one sheet and sort by student ID to place each
-        student&rsquo;s pre and post rows together.
+        with the student ID, per-question ratings and paragraphs, and domain
+        subtotals already calculated.
       </p>
 
       <nav className="pagenav">

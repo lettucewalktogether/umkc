@@ -166,7 +166,7 @@ export default function Accounting() {
       <nav className="pagenav">
         <Link href={`${course.basePath}/rubric`}>&larr; Rubric</Link>
         <Link href={`${course.basePath}/assessment`}>
-          Pre/post assessment &rarr;
+          Assessment &rarr;
         </Link>
       </nav>
     </>

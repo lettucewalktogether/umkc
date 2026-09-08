@@ -9,7 +9,6 @@ import MethodsTab from "./MethodsTab";
 import CompletionTab from "./CompletionTab";
 import { classCode, course } from "@/lib/course";
 import { cohortLabel, type Cohort } from "@/lib/cohorts";
-import { type Coding } from "@/lib/coding";
 import {
   dedupeAssessment,
   dedupeEval,
@@ -36,8 +35,6 @@ const ASSESSMENT_TABS = [
 ] as const;
 
 type AssessmentTabKey = (typeof ASSESSMENT_TABS)[number]["key"];
-
-const CODING_KEY = "umkc-govtacct-coding-v1";
 
 type LoadedFile = { name: string; kind: string; rows: number };
 
@@ -67,33 +64,12 @@ export default function Dashboard() {
   const [files, setFiles] = useState<LoadedFile[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [onlyComplete, setOnlyComplete] = useState(false);
-  const [coding, setCodingState] = useState<Coding>({});
-  const [codingLoaded, setCodingLoaded] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<
     "loading" | "ready" | "error"
   >("loading");
 
 
   // Coding is slow to redo, so it persists in this browser between sessions.
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(CODING_KEY);
-      if (raw) setCodingState(JSON.parse(raw) as Coding);
-    } catch {
-      /* start with no coding */
-    }
-    setCodingLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    if (!codingLoaded) return;
-    try {
-      window.localStorage.setItem(CODING_KEY, JSON.stringify(coding));
-    } catch {
-      /* coding still works for this session */
-    }
-  }, [coding, codingLoaded]);
-
   // Submitted evaluations arrive from the blob store; uploaded files still
   // work alongside them, and dedupeEval collapses any overlap.
   const loadSubmitted = useCallback(async () => {
@@ -106,10 +82,21 @@ export default function Dashboard() {
       }
       const data = (await res.json()) as {
         cohorts?: Cohort[];
+        current?: string | null;
         files?: SubmittedFile[];
       };
+      const files = data.files ?? [];
       setCohorts(data.cohorts ?? []);
-      setSubmittedFiles(data.files ?? []);
+      setSubmittedFiles(files);
+      // Open on the cohort running today rather than on everything ever
+      // collected. Fall back to all only when today's cohort has nothing yet.
+      setCohortFilter((prev) => {
+        if (prev !== ALL_COHORTS) return prev;
+        const current = data.current;
+        return current && files.some((f) => f.cohort === current)
+          ? current
+          : ALL_COHORTS;
+      });
       setSubmitStatus("ready");
     } catch {
       setSubmitStatus("error");
@@ -511,11 +498,7 @@ export default function Dashboard() {
               <QuantTab records={assessmentRecords} />
             )}
             {assessmentTab === "qual" && (
-              <QualTab
-                records={assessmentRecords}
-                coding={coding}
-                setCoding={(updater) => setCodingState((prev) => updater(prev))}
-              />
+              <QualTab records={assessmentRecords} />
             )}
             {assessmentTab === "sentiment" && (
               <SentimentTab records={assessmentRecords} />

@@ -9,7 +9,6 @@ type Answer = { rating: number | null; explanation: string };
 
 type Response = {
   id: string;
-  point: "Pre" | "Post" | "";
   code: string;
   date: string;
   answers: Answer[];
@@ -17,10 +16,9 @@ type Response = {
 
 const STORAGE_KEY = "umkc-govtacct-assessment-v1";
 
-function emptyResponse(code = "", point: Response["point"] = ""): Response {
+function emptyResponse(code = ""): Response {
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    point,
     code,
     date: today(),
     answers: questions.map(() => ({ rating: null, explanation: "" })),
@@ -46,7 +44,6 @@ function csvRows(responses: Response[]): (string | number)[][] {
   const header = [
     "Class code",
     "Student ID",
-    "Assessment point",
     "Date",
     ...questions.flatMap((q, i) => [
       `Q${i + 1} rating (1-7)`,
@@ -59,7 +56,6 @@ function csvRows(responses: Response[]): (string | number)[][] {
   const rows = responses.map((r) => [
     classCode,
     r.code,
-    r.point,
     r.date,
     ...r.answers.flatMap((a) => [a.rating ?? "", a.explanation]),
     ...domains.map((d) => subtotal(r, d) ?? ""),
@@ -69,13 +65,8 @@ function csvRows(responses: Response[]): (string | number)[][] {
   return [header, ...rows];
 }
 
-export default function AssessmentForm({
-  defaultPoint,
-}: {
-  /** Preselected on a fresh response; see defaultAssessmentPoint(). */
-  defaultPoint: "Pre" | "Post";
-}) {
-  const [current, setCurrent] = useState<Response>(() => emptyResponse("", defaultPoint));
+export default function AssessmentForm() {
+  const [current, setCurrent] = useState<Response>(() => emptyResponse());
   const [saved, setSaved] = useState<Response[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [submitPasscode, setSubmitPasscode] = useState("");
@@ -84,8 +75,8 @@ export default function AssessmentForm({
     message?: string;
   }>({ status: "idle" });
 
-  // Restoring lets a student complete the pre-assessment now and the post
-  // months later on the same browser, so one export carries both rows.
+  // Restoring lets a student come back to an unfinished response in the same
+  // browser instead of starting over.
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -144,7 +135,7 @@ export default function AssessmentForm({
       }
       return [...prev, current];
     });
-    setCurrent(emptyResponse(current.code, defaultPoint));
+    setCurrent(emptyResponse(current.code));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -179,7 +170,7 @@ export default function AssessmentForm({
         status: "sent",
         message: `Sent ${data.rows ?? rows.length} response${
           (data.rows ?? rows.length) === 1 ? "" : "s"
-        }. Your pre- and post-assessments are stored separately, so submitting one never replaces the other.`,
+}. Submitting again replaces what you sent.`,
       });
     } catch {
       setSubmitState({
@@ -212,22 +203,6 @@ export default function AssessmentForm({
       <h2>Assessment information</h2>
       <div className="fieldrow">
         <label className="field">
-          <span>Assessment point</span>
-          <select
-            value={current.point}
-            onChange={(e) =>
-              setCurrent((p) => ({
-                ...p,
-                point: e.target.value as Response["point"],
-              }))
-            }
-          >
-            <option value="">Select</option>
-            <option value="Pre">Pre-assessment</option>
-            <option value="Post">Post-assessment</option>
-          </select>
-        </label>
-        <label className="field">
           <span>Your student ID</span>
           <input
             type="text"
@@ -250,12 +225,6 @@ export default function AssessmentForm({
           />
         </label>
       </div>
-      <p className="status">
-        Choose a code you will remember but that does not identify you, and use
-        the identical code on the post-assessment. Matching the two is what makes
-        the change measurable.
-      </p>
-
       <h2>Assessment questions</h2>
       {questions.map((q, i) => (
         <section className="q" key={i}>
@@ -363,8 +332,7 @@ export default function AssessmentForm({
             <table>
               <thead>
                 <tr>
-                  <th className="num">Point</th>
-                  <th>Code</th>
+                  <th>Student ID</th>
                   <th className="num">Date</th>
                   <th className="num">Answered</th>
                   <th className="num">Overall</th>
@@ -374,7 +342,6 @@ export default function AssessmentForm({
               <tbody>
                 {saved.map((r) => (
                   <tr key={r.id}>
-                    <td className="num">{r.point || "—"}</td>
                     <td>{r.code || "—"}</td>
                     <td className="num">{r.date}</td>
                     <td className="num">
@@ -421,8 +388,7 @@ export default function AssessmentForm({
         <p className="status">
           Sends your responses straight to the instructor dashboard, so there
           is no file to hand in. The class passcode is the one your professor
-          reads out. Your pre- and post-assessments are stored separately, so
-          submitting the post never overwrites the pre.
+          reads out. Submitting again replaces what you sent.
         </p>
         <div className="fieldrow">
           <label className="field">
@@ -473,7 +439,7 @@ export default function AssessmentForm({
               )
             ) {
               setSaved([]);
-              setCurrent(emptyResponse("", defaultPoint));
+              setCurrent(emptyResponse());
             }
           }}
           disabled={!canExport}

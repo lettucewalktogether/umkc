@@ -2,115 +2,22 @@
 
 import Cite from "@/app/Cite";
 import { classCode } from "@/lib/course";
-import { domains, questions } from "@/lib/assessment";
-import {
-  domainSum,
-  matchPrePost,
-  overallSum,
-  type AssessmentRecord,
-} from "@/lib/dashboard";
-import {
-  benjaminiHochberg,
-  cronbachAlpha,
-  fmt,
-  formatP,
-  holmAdjust,
-  interpretD,
-  pairedT,
-  wilcoxonSignedRank,
-  type PairedT,
-  type Wilcoxon,
-} from "@/lib/stats";
+import { domains, questions, scale } from "@/lib/assessment";
+import { type AssessmentRecord } from "@/lib/dashboard";
+import { cronbachAlpha, fmt, mean, median, sd } from "@/lib/stats";
 import { downloadCsv, slug, toCsv, today } from "@/lib/csv";
 
-type Row = {
-  label: string;
-  scope: "item" | "domain" | "overall";
-  t: PairedT | null;
-  w: Wilcoxon | null;
-};
+/**
+ * Confidence ratings for one administration of the instrument.
+ *
+ * Everything here is computed from the submitted responses; there is nothing
+ * to configure. The instrument is administered once, so these are descriptive
+ * statistics rather than tests of change: with a single measurement there is
+ * no second point to compare against, and reporting a change statistic would
+ * be inventing one.
+ */
 
-function buildRows(pairs: { pre: AssessmentRecord; post: AssessmentRecord }[]) {
-  const rows: Row[] = [];
-
-  // Item-level: one row per question, using only pairs where both are answered.
-  questions.forEach((q, i) => {
-    const pre: number[] = [];
-    const post: number[] = [];
-    for (const p of pairs) {
-      const a = p.pre.ratings[i];
-      const b = p.post.ratings[i];
-      if (a !== null && a !== undefined && b !== null && b !== undefined) {
-        pre.push(a);
-        post.push(b);
-      }
-    }
-    rows.push({
-      label: `Q${i + 1}. ${q.stem}`,
-      scope: "item",
-      t: pairedT(pre, post),
-      w: wilcoxonSignedRank(pre, post),
-    });
-  });
-
-  for (const d of domains) {
-    const pre: number[] = [];
-    const post: number[] = [];
-    for (const p of pairs) {
-      const a = domainSum(p.pre, d.from, d.to);
-      const b = domainSum(p.post, d.from, d.to);
-      if (a !== null && b !== null) {
-        pre.push(a);
-        post.push(b);
-      }
-    }
-    rows.push({
-      label: `${d.name} (Q${d.from}-${d.to})`,
-      scope: "domain",
-      t: pairedT(pre, post),
-      w: wilcoxonSignedRank(pre, post),
-    });
-  }
-
-  const preAll: number[] = [];
-  const postAll: number[] = [];
-  for (const p of pairs) {
-    const a = overallSum(p.pre);
-    const b = overallSum(p.post);
-    if (a !== null && b !== null) {
-      preAll.push(a);
-      postAll.push(b);
-    }
-  }
-  rows.push({
-    label: "Overall self-reported confidence (Q1-10)",
-    scope: "overall",
-    t: pairedT(preAll, postAll),
-    w: wilcoxonSignedRank(preAll, postAll),
-  });
-
-  return rows;
-}
-
-/** Item scores for one assessment point, transposed for Cronbach's alpha. */
-function itemMatrix(
-  records: AssessmentRecord[],
-  from: number,
-  to: number,
-): number[][] {
-  const complete = records.filter((r) => {
-    for (let i = from - 1; i <= to - 1; i++) {
-      const v = r.ratings[i];
-      if (v === null || v === undefined) return false;
-    }
-    return true;
-  });
-  const items: number[][] = [];
-  for (let i = from - 1; i <= to - 1; i++) {
-    items.push(complete.map((r) => r.ratings[i] as number));
-  }
-  return items;
-}
+const RATINGS = [1, 2, 3, 4, 5, 6, 7];
 
 export default function QuantTab({
   records,
@@ -120,329 +27,224 @@ export default function QuantTab({
   if (records.length === 0) {
     return (
       <p className="saved-empty">
-        No assessments yet. The pre/post analysis appears here as students submit them.
+        No assessments yet. The analysis appears here as students submit them,
+        and recalculates on every refresh.
       </p>
     );
   }
 
-  const match = matchPrePost(records);
-  const { pairs } = match;
+  // One row per respondent, one column per item.
+  const perItem = questions.map((_, i) =>
+    records.map((r) => r.ratings[i]).filter((v): v is number => v !== null),
+  );
 
-  if (pairs.length < 2) {
-    return (
-      <>
-        <MatchingPanel match={match} />
-        <p className="status incomplete">
-          At least two matched pre/post pairs are needed before any test can be
-          computed. {pairs.length} matched so far.
-        </p>
-      </>
+  const completeRows = records
+    .map((r) => r.ratings)
+    .filter((rs) => rs.every((v) => v !== null)) as number[][];
+
+  const overall = perItem.flat();
+
+  const domainStats = domains.map((d) => {
+    const idx = Array.from(
+      { length: d.to - d.from + 1 },
+      (_, k) => d.from - 1 + k,
     );
-  }
+    const subtotals = records
+      .map((r) => idx.map((i) => r.ratings[i]))
+      .filter((vs) => vs.every((v) => v !== null))
+      .map((vs) => (vs as number[]).reduce((a, b) => a + b, 0));
+    const itemsForAlpha = completeRows.map((row) => idx.map((i) => row[i]));
+    return {
+      domain: d,
+      n: subtotals.length,
+      meanSubtotal: subtotals.length ? mean(subtotals) : null,
+      sdSubtotal: subtotals.length > 1 ? sd(subtotals) : null,
+      maxSubtotal: idx.length * 7,
+      alpha:
+        itemsForAlpha.length > 1 && idx.length > 1
+          ? cronbachAlpha(itemsForAlpha)
+          : null,
+    };
+  });
 
-  const rows = buildRows(pairs);
-  const itemRows = rows.filter((r) => r.scope === "item");
-  const itemPs = itemRows.map((r) => r.w?.p ?? NaN);
-  const holm = holmAdjust(itemPs);
-  const bh = benjaminiHochberg(itemPs);
+  const alphaAll =
+    completeRows.length > 1 ? cronbachAlpha(completeRows) : null;
 
-  const preRecords = pairs.map((p) => p.pre);
-  const postRecords = pairs.map((p) => p.post);
-
-  const alphas = [
-    ...domains.map((d) => ({
-      label: `${d.name} (Q${d.from}-${d.to})`,
-      k: d.to - d.from + 1,
-      pre: cronbachAlpha(itemMatrix(preRecords, d.from, d.to)),
-      post: cronbachAlpha(itemMatrix(postRecords, d.from, d.to)),
-    })),
-    {
-      label: "Full instrument (Q1-10)",
-      k: questions.length,
-      pre: cronbachAlpha(itemMatrix(preRecords, 1, questions.length)),
-      post: cronbachAlpha(itemMatrix(postRecords, 1, questions.length)),
-    },
-  ];
-
-  function exportTable() {
-    const out: (string | number)[][] = [
-      [
-        "Class code",
-        "Scope",
-        "Measure",
-        "n pairs",
-        "M pre",
-        "SD pre",
-        "M post",
-        "SD post",
-        "Mean difference",
-        "95% CI lower",
-        "95% CI upper",
-        "t",
-        "df",
-        "p (t test)",
-        "Cohen's d_z",
-        "Wilcoxon W",
-        "Wilcoxon z",
-        "p (Wilcoxon)",
-        "Wilcoxon method",
-        "Rank-biserial r",
-        "Holm-adjusted p",
-        "BH-adjusted p",
-      ],
+  function exportCsv() {
+    const header = [
+      "Class code",
+      "Item",
+      "Question",
+      "Responses",
+      "Mean",
+      "SD",
+      "Median",
+      ...RATINGS.map((r) => `Rated ${r}`),
     ];
-    rows.forEach((r, i) => {
-      const itemIndex = r.scope === "item" ? i : -1;
-      out.push([
+    const rows = questions.map((q, i) => {
+      const vs = perItem[i];
+      return [
         classCode,
-        r.scope,
-        r.label,
-        r.t?.n ?? "",
-        r.t ? Number(r.t.meanPre.toFixed(3)) : "",
-        r.t ? Number(r.t.sdPre.toFixed(3)) : "",
-        r.t ? Number(r.t.meanPost.toFixed(3)) : "",
-        r.t ? Number(r.t.sdPost.toFixed(3)) : "",
-        r.t ? Number(r.t.meanDiff.toFixed(3)) : "",
-        r.t ? Number(r.t.ciLow.toFixed(3)) : "",
-        r.t ? Number(r.t.ciHigh.toFixed(3)) : "",
-        r.t && !isNaN(r.t.t) ? Number(r.t.t.toFixed(3)) : "",
-        r.t?.df ?? "",
-        r.t && !isNaN(r.t.p) ? Number(r.t.p.toFixed(6)) : "",
-        r.t && !isNaN(r.t.dz) ? Number(r.t.dz.toFixed(3)) : "",
-        r.w?.W ?? "",
-        r.w && !isNaN(r.w.z) ? Number(r.w.z.toFixed(3)) : "",
-        r.w && !isNaN(r.w.p) ? Number(r.w.p.toFixed(6)) : "",
-        r.w?.method ?? "",
-        r.w ? Number(r.w.rankBiserial.toFixed(3)) : "",
-        itemIndex >= 0 && !isNaN(holm[itemIndex])
-          ? Number(holm[itemIndex].toFixed(6))
-          : "",
-        itemIndex >= 0 && !isNaN(bh[itemIndex])
-          ? Number(bh[itemIndex].toFixed(6))
-          : "",
-      ]);
+        `Q${i + 1}`,
+        q.stem,
+        vs.length,
+        vs.length ? Number(mean(vs).toFixed(2)) : "",
+        vs.length > 1 ? Number(sd(vs).toFixed(2)) : "",
+        vs.length ? median(vs) : "",
+        ...RATINGS.map((r) => vs.filter((v) => v === r).length),
+      ];
     });
-
-    out.push([]);
-    out.push(["Internal consistency (Cronbach's alpha)"]);
-    out.push(["Scale", "Items", "Alpha pre", "Alpha post"]);
-    for (const a of alphas) {
-      out.push([
-        a.label,
-        a.k,
-        isNaN(a.pre) ? "" : Number(a.pre.toFixed(3)),
-        isNaN(a.post) ? "" : Number(a.post.toFixed(3)),
-      ]);
-    }
-
     downloadCsv(
-      `${slug(classCode, "class")}-assessment-statistics-${today()}.csv`,
-      toCsv(out),
+      `${slug(classCode, "class")}-assessment-summary-${today()}.csv`,
+      toCsv([header, ...rows]),
     );
   }
 
   return (
     <>
-      <MatchingPanel match={match} />
+      <div className="panel">
+        <span className="label">One administration</span>
+        <p>
+          {records.length} response{records.length === 1 ? "" : "s"}, computed
+          from what students actually submitted and recalculated whenever the
+          dashboard refreshes. The instrument is given once, so these describe
+          the class as measured rather than testing change over time.
+        </p>
+      </div>
 
       <div className="buttonrow">
-        <button type="button" onClick={exportTable}>
-          Export statistics table (CSV)
+        <button type="button" onClick={exportCsv}>
+          Export item summary (CSV)
         </button>
       </div>
 
-      <h3>Item-level change</h3>
-      <p className="status">
-        Each row compares the same students&rsquo; pre and post rating on one
-        item. The Wilcoxon signed-rank test <Cite k="wilcoxon1945" /> is the
-        primary test because single items are ordinal; the paired t test is
-        reported alongside it because both are conventional for Likert-type data{" "}
-        <Cite k="norman2010" />. Adjusted p-values control for testing all ten
-        items <Cite k={["holm1979", "benjamini1995"]} />.
+      <h3>Overall</h3>
+      <p>
+        Mean confidence across every answered item is{" "}
+        <strong>{fmt(mean(overall))}</strong> on the seven-point scale
+        {overall.length > 1 && <> (SD {fmt(sd(overall))})</>}, from{" "}
+        {overall.length} answered item
+        {overall.length === 1 ? "" : "s"}. The scale runs from 1 (
+        {scale[0][2].toLowerCase()}) to 7 ({scale[6][2].toLowerCase()}).
       </p>
+
+      <h3>By item</h3>
       <div className="tablewrap">
         <table>
           <thead>
             <tr>
               <th>Item</th>
-              <th className="num sym">n</th>
-              <th className="num sym">M pre (SD)</th>
-              <th className="num sym">M post (SD)</th>
-              <th className="num sym">ΔM [95% CI]</th>
-              <th className="num sym">W</th>
-              <th className="num sym">p</th>
-              <th className="num sym">p Holm</th>
-              <th className="num sym">r</th>
-              <th className="num sym">d<sub>z</sub></th>
-            </tr>
-          </thead>
-          <tbody>
-            {itemRows.map((r, i) => (
-              <tr key={r.label}>
-                <td title={r.label}>{r.label.split(".")[0]}</td>
-                <td className="num">{r.t?.n ?? "—"}</td>
-                <td className="num">
-                  {r.t ? `${fmt(r.t.meanPre)} (${fmt(r.t.sdPre)})` : "—"}
-                </td>
-                <td className="num">
-                  {r.t ? `${fmt(r.t.meanPost)} (${fmt(r.t.sdPost)})` : "—"}
-                </td>
-                <td className="num">
-                  {r.t
-                    ? `${fmt(r.t.meanDiff)} [${fmt(r.t.ciLow)}, ${fmt(r.t.ciHigh)}]`
-                    : "—"}
-                </td>
-                <td className="num">{r.w ? fmt(r.w.W, 1) : "—"}</td>
-                <td className="num">{r.w ? formatP(r.w.p) : "—"}</td>
-                <td className="num">
-                  {isNaN(holm[i]) ? "—" : formatP(holm[i])}
-                </td>
-                <td className="num">{r.w ? fmt(r.w.rankBiserial) : "—"}</td>
-                <td className="num">{r.t ? fmt(r.t.dz) : "—"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <details className="disclosure">
-        <summary>Full item wording</summary>
-        <ol>
-          {questions.map((q) => (
-            <li key={q.stem}>{q.stem}</li>
-          ))}
-        </ol>
-      </details>
-
-      <h3>Domain and overall change</h3>
-      <div className="tablewrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Scale</th>
-              <th className="num sym">n</th>
-              <th className="num sym">M pre (SD)</th>
-              <th className="num sym">M post (SD)</th>
-              <th className="num sym">ΔM [95% CI]</th>
-              <th className="num sym">t(df)</th>
-              <th className="num sym">p</th>
-              <th className="num sym">d<sub>z</sub></th>
-              <th className="num">Magnitude</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows
-              .filter((r) => r.scope !== "item")
-              .map((r) => (
-                <tr key={r.label}>
-                  <td>{r.label}</td>
-                  <td className="num">{r.t?.n ?? "—"}</td>
-                  <td className="num">
-                    {r.t ? `${fmt(r.t.meanPre)} (${fmt(r.t.sdPre)})` : "—"}
-                  </td>
-                  <td className="num">
-                    {r.t ? `${fmt(r.t.meanPost)} (${fmt(r.t.sdPost)})` : "—"}
-                  </td>
-                  <td className="num">
-                    {r.t
-                      ? `${fmt(r.t.meanDiff)} [${fmt(r.t.ciLow)}, ${fmt(r.t.ciHigh)}]`
-                      : "—"}
-                  </td>
-                  <td className="num">
-                    {r.t && !isNaN(r.t.t)
-                      ? `${fmt(r.t.t)}(${r.t.df})`
-                      : "—"}
-                  </td>
-                  <td className="num">{r.t ? formatP(r.t.p) : "—"}</td>
-                  <td className="num">{r.t ? fmt(r.t.dz) : "—"}</td>
-                  <td className="num">
-                    {r.t ? interpretD(r.t.dz) : "—"}
-                  </td>
-                </tr>
+              <th className="num">n</th>
+              <th className="num">Mean</th>
+              <th className="num">SD</th>
+              <th className="num">Median</th>
+              {RATINGS.map((r) => (
+                <th className="num" key={r}>
+                  {r}
+                </th>
               ))}
+            </tr>
+          </thead>
+          <tbody>
+            {questions.map((q, i) => {
+              const vs = perItem[i];
+              return (
+                <tr key={q.stem}>
+                  <td>
+                    <strong>Q{i + 1}</strong> {q.stem}
+                  </td>
+                  <td className="num">{vs.length}</td>
+                  <td className="num">{vs.length ? fmt(mean(vs)) : "—"}</td>
+                  <td className="num">{vs.length > 1 ? fmt(sd(vs)) : "—"}</td>
+                  <td className="num">{vs.length ? median(vs) : "—"}</td>
+                  {RATINGS.map((r) => (
+                    <td className="num" key={r}>
+                      {vs.filter((v) => v === r).length || "—"}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
-      <p className="status">
-        d_z is the mean difference divided by the standard deviation of the
-        differences, the effect size for a within-subjects comparison{" "}
-        <Cite k={["cohen1988", "lakens2013"]} />.
-      </p>
 
-      <h3>Internal consistency</h3>
-      <p className="status">
-        Cronbach&rsquo;s alpha <Cite k="cronbach1951" /> for each scale, computed
-        on respondents who answered every item in that scale. Alpha is sensitive
-        to the number of items, so the two- and four-item domain scales will
-        generally run lower than the full instrument.
+      <h3>By domain</h3>
+      <p>
+        Domain scores are the sum of their items, so each has a different
+        maximum. Alpha is Cronbach&rsquo;s coefficient{" "}
+        <Cite k="cronbach1951" />, reported where a domain has more than one
+        item and more than one complete response.
       </p>
       <div className="tablewrap">
         <table>
           <thead>
             <tr>
-              <th>Scale</th>
-              <th className="num">Items</th>
-              <th className="num sym">α pre</th>
-              <th className="num sym">α post</th>
+              <th>Domain</th>
+              <th className="num">Complete responses</th>
+              <th className="num">Mean</th>
+              <th className="num">SD</th>
+              <th className="num">Out of</th>
+              <th className="num">Alpha</th>
             </tr>
           </thead>
           <tbody>
-            {alphas.map((a) => (
-              <tr key={a.label}>
-                <td>{a.label}</td>
-                <td className="num">{a.k}</td>
-                <td className="num">{fmt(a.pre, 3)}</td>
-                <td className="num">{fmt(a.post, 3)}</td>
+            {domainStats.map((d) => (
+              <tr key={d.domain.name}>
+                <td>
+                  {d.domain.name}{" "}
+                  <span className="subtle">
+                    (Q{d.domain.from}&ndash;Q{d.domain.to})
+                  </span>
+                </td>
+                <td className="num">{d.n}</td>
+                <td className="num">
+                  {d.meanSubtotal === null ? "—" : fmt(d.meanSubtotal)}
+                </td>
+                <td className="num">
+                  {d.sdSubtotal === null ? "—" : fmt(d.sdSubtotal)}
+                </td>
+                <td className="num">{d.maxSubtotal}</td>
+                <td className="num">
+                  {d.alpha === null ? "—" : fmt(d.alpha)}
+                </td>
               </tr>
             ))}
+            <tr>
+              <td>
+                <strong>All ten items</strong>
+              </td>
+              <td className="num">{completeRows.length}</td>
+              <td className="num">
+                {completeRows.length
+                  ? fmt(mean(completeRows.map((r) => r.reduce((a, b) => a + b, 0))))
+                  : "—"}
+              </td>
+              <td className="num">
+                {completeRows.length > 1
+                  ? fmt(sd(completeRows.map((r) => r.reduce((a, b) => a + b, 0))))
+                  : "—"}
+              </td>
+              <td className="num">70</td>
+              <td className="num">
+                {alphaAll === null ? "—" : fmt(alphaAll)}
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
 
       <div className="panel warn">
-        <span className="label">Interpretive limit</span>
+        <span className="label">Reading these figures</span>
         <p>
-          Every number above describes <em>self-reported confidence</em>, not
-          demonstrated knowledge. Self-assessment correlates only weakly with
-          measured learning and tracks affect and motivation more closely{" "}
-          <Cite k="sitzmann2010" />, and students with the least command of an
-          area are the least able to judge it <Cite k="kruger1999" />. Report
-          these results together with the qualitative coding, as the instrument
-          itself directs, and do not present a confidence gain as evidence of a
-          knowledge gain.
+          Every measure here is self-reported confidence. Self-assessment of
+          knowledge tracks affect and motivation more closely than demonstrated
+          learning <Cite k="sitzmann2010" />, and respondents with the least
+          command of an area are the least able to judge it{" "}
+          <Cite k="kruger1999" />. A high mean is evidence about how the class
+          feels, not about what it can do.
         </p>
       </div>
     </>
-  );
-}
-
-function MatchingPanel({
-  match,
-}: {
-  match: ReturnType<typeof matchPrePost>;
-}) {
-  const total =
-    match.pairs.length * 2 + match.preOnly.length + match.postOnly.length;
-  const rate = total ? (match.pairs.length * 2) / total : 0;
-
-  return (
-    <div className="panel">
-      <span className="label">Matching</span>
-      <p>
-        {match.pairs.length} matched{" "}
-        {match.pairs.length === 1 ? "pair" : "pairs"} on the anonymous code
-        {match.preOnly.length > 0 &&
-          `, ${match.preOnly.length} pre-only response${match.preOnly.length === 1 ? "" : "s"}`}
-        {match.postOnly.length > 0 &&
-          `, ${match.postOnly.length} post-only response${match.postOnly.length === 1 ? "" : "s"}`}
-        . Matched rate {(rate * 100).toFixed(0)}% of loaded responses.
-      </p>
-      {match.duplicates.length > 0 && (
-        <p className="status incomplete">
-          Duplicate codes at the same assessment point:{" "}
-          {match.duplicates.join(", ")}. Only the first response for each is
-          used. Resolve these before reporting.
-        </p>
-      )}
-    </div>
   );
 }

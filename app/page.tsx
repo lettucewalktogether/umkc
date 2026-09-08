@@ -27,7 +27,7 @@ export default function Home() {
             <h3>UMKC · Government Accounting</h3>
             <p>
               The Kansas City Quality Control Review challenge, run with{" "}
-              {course.instructor}. Challenge brief, rubric, pre/post assessment,
+              {course.instructor}. Challenge brief, rubric, confidence assessment,
               and the government accounting exercise.
             </p>
           </Link>

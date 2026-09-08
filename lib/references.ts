@@ -28,29 +28,6 @@ export const references: Reference[] = [
       "Reporting format for statistics, tables, and reference entries throughout the dashboard.",
   },
   {
-    key: "benjamini1995",
-    inText: "Benjamini & Hochberg, 1995",
-    full: "Benjamini, Y., & Hochberg, Y. (1995). Controlling the false discovery rate: A practical and powerful approach to multiple testing. Journal of the Royal Statistical Society: Series B, 57(1), 289-300.",
-    doi: "10.1111/j.2517-6161.1995.tb02031.x",
-    usedFor:
-      "False-discovery-rate adjusted p-values across the ten items, offered alongside the Holm correction.",
-  },
-  {
-    key: "cohen1960",
-    inText: "Cohen, 1960",
-    full: "Cohen, J. (1960). A coefficient of agreement for nominal scales. Educational and Psychological Measurement, 20(1), 37-46.",
-    doi: "10.1177/001316446002000104",
-    usedFor:
-      "Cohen's kappa for inter-coder agreement in the qualitative coding tab.",
-  },
-  {
-    key: "cohen1988",
-    inText: "Cohen, 1988",
-    full: "Cohen, J. (1988). Statistical power analysis for the behavioral sciences (2nd ed.). Lawrence Erlbaum Associates.",
-    usedFor:
-      "Cohen's d_z effect size and the negligible/small/medium/large descriptive bands.",
-  },
-  {
     key: "cronbach1951",
     inText: "Cronbach, 1951",
     full: "Cronbach, L. J. (1951). Coefficient alpha and the internal structure of tests. Psychometrika, 16(3), 297-334.",
@@ -64,15 +41,7 @@ export const references: Reference[] = [
     full: "Elo, S., & Kyngäs, H. (2008). The qualitative content analysis process. Journal of Advanced Nursing, 62(1), 107-115.",
     doi: "10.1111/j.1365-2648.2007.04569.x",
     usedFor:
-      "Deductive content analysis: applying the instrument's predefined coding categories to the open responses.",
-  },
-  {
-    key: "holm1979",
-    inText: "Holm, 1979",
-    full: "Holm, S. (1979). A simple sequentially rejective multiple test procedure. Scandinavian Journal of Statistics, 6(2), 65-70.",
-    url: "https://www.jstor.org/stable/4615733",
-    usedFor:
-      "Family-wise error correction across the ten item-level tests, reported as the default adjustment.",
+      "The standard the automatic indicators do not meet: coding meaning requires a human coder, so the dashboard reports observable features instead and says so.",
   },
   {
     key: "hutto2014",
@@ -83,19 +52,11 @@ export const references: Reference[] = [
       "The valence-aware lexicon and rules producing the compound sentiment score for each open response.",
   },
   {
-    key: "kerby2014",
-    inText: "Kerby, 2014",
-    full: "Kerby, D. S. (2014). The simple difference formula: An approach to teaching nonparametric correlation. Comprehensive Psychology, 3, Article 11.IT.3.1.",
-    doi: "10.2466/11.IT.3.1",
-    usedFor:
-      "Matched-pairs rank-biserial correlation, the effect size reported with the Wilcoxon test.",
-  },
-  {
     key: "krippendorff2018",
     inText: "Krippendorff, 2018",
     full: "Krippendorff, K. (2018). Content analysis: An introduction to its methodology (4th ed.). SAGE Publications.",
     usedFor:
-      "Codebook construction, unitizing, and the reliability standards applied to the qualitative tab.",
+      "Why correctness is not inferred automatically: content analysis of meaning needs a codebook and a reliability check.",
   },
   {
     key: "kruger1999",
@@ -114,33 +75,10 @@ export const references: Reference[] = [
       "Choice of d_z for a within-subjects design, and reporting effect sizes with confidence intervals.",
   },
   {
-    key: "landis1977",
-    inText: "Landis & Koch, 1977",
-    full: "Landis, J. R., & Koch, G. G. (1977). The measurement of observer agreement for categorical data. Biometrics, 33(1), 159-174.",
-    doi: "10.2307/2529310",
-    usedFor: "The descriptive bands attached to reported kappa values.",
-  },
-  {
     key: "likert1932",
     inText: "Likert, 1932",
     full: "Likert, R. (1932). A technique for the measurement of attitudes. Archives of Psychology, 140, 1-55.",
     usedFor: "The rating-scale format of the seven-point confidence items.",
-  },
-  {
-    key: "mcnemar1947",
-    inText: "McNemar, 1947",
-    full: "McNemar, Q. (1947). Note on the sampling error of the difference between correlated proportions or percentages. Psychometrika, 12(2), 153-157.",
-    doi: "10.1007/BF02295996",
-    usedFor:
-      "Testing whether the presence of a qualitative code changed between the pre and post responses of the same students.",
-  },
-  {
-    key: "norman2010",
-    inText: "Norman, 2010",
-    full: "Norman, G. (2010). Likert scales, levels of measurement and the 'laws' of statistics. Advances in Health Sciences Education, 15(5), 625-632.",
-    doi: "10.1007/s10459-010-9222-y",
-    usedFor:
-      "Justification for reporting a parametric test alongside the nonparametric test on ordinal rating data.",
   },
   {
     key: "sitzmann2010",
@@ -149,14 +87,6 @@ export const references: Reference[] = [
     doi: "10.5465/amle.9.2.zqr169",
     usedFor:
       "The central limitation: self-reported confidence is more closely related to affect and motivation than to demonstrated learning.",
-  },
-  {
-    key: "wilcoxon1945",
-    inText: "Wilcoxon, 1945",
-    full: "Wilcoxon, F. (1945). Individual comparisons by ranking methods. Biometrics Bulletin, 1(6), 80-83.",
-    doi: "10.2307/3001968",
-    usedFor:
-      "The nonparametric paired test used as the primary inferential test for the ordinal items.",
   },
 ];
 

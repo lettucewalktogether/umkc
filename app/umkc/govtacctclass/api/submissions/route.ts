@@ -124,8 +124,7 @@ async function submitAssessment(csv: string, cohort: string) {
     const i = header.indexOf("Student ID");
     return i >= 0 ? i : header.indexOf("Anonymous matching code");
   })();
-  const iPoint = header.indexOf("Assessment point");
-  if (iCode < 0 || iPoint < 0) {
+  if (iCode < 0) {
     return NextResponse.json(
       { error: "That assessment export is missing its header row." },
       { status: 400 },
@@ -144,27 +143,17 @@ async function submitAssessment(csv: string, cohort: string) {
         { status: 400 },
       );
     }
-    const point = (row[iPoint] ?? "").trim();
-    if (point !== "Pre" && point !== "Post") {
-      return NextResponse.json(
-        { error: "Choose Pre or Post for every response before submitting." },
-        { status: 400 },
-      );
-    }
   }
 
-  // Keyed by student ID AND point, so submitting the post-assessment never
-  // overwrites the pre it has to be paired against.
+  // One blob per student per cohort: resubmitting corrects a response rather
+  // than accumulating duplicates.
   await Promise.all(
     body.map((row) =>
       putSubmission(
         "active",
         "assessment",
         cohort,
-        `${segment(row[iCode] ?? "", "student")}--${segment(
-          row[iPoint] ?? "",
-          "point",
-        )}.csv`,
+        `${segment(row[iCode] ?? "", "student")}.csv`,
         toCsv([header, row]),
       ),
     ),
@@ -198,7 +187,12 @@ export async function GET(request: Request) {
     readCohorts(),
   ]);
 
-  return NextResponse.json({ stage: stageParam, cohorts, files });
+  return NextResponse.json({
+    stage: stageParam,
+    cohorts,
+    current: cohortForDate(cohorts)?.id ?? null,
+    files,
+  });
 }
 
 /**

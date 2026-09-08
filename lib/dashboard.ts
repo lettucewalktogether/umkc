@@ -39,6 +39,8 @@ export type FileKind = "eval" | "assessment" | "unknown";
 export function detectKind(text: string): FileKind {
   const first = text.slice(0, 4000);
   if (first.includes("Team evaluated")) return "eval";
+  if (first.includes("Q1 rating")) return "assessment";
+  // Headers from exports made before the instrument became single-administration.
   if (first.includes("Assessment point")) return "assessment";
   if (first.includes("Anonymous matching code")) return "assessment";
   return "unknown";
