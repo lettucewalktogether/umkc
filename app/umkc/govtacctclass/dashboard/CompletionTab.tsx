@@ -15,8 +15,6 @@ type Props = {
   records: AssessmentRecord[];
   /** Null while "all cohorts" is selected: a roster belongs to one cohort. */
   cohort: string | null;
-  /** Removes one student's response from the dashboard. */
-  onRemove: (studentId: string) => Promise<void>;
 };
 
 type Row = {
@@ -25,7 +23,7 @@ type Row = {
   onRoster: boolean;
 };
 
-export default function CompletionTab({ records, cohort, onRemove }: Props) {
+export default function CompletionTab({ records, cohort }: Props) {
   const [roster, setRoster] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">(
@@ -136,7 +134,6 @@ export default function CompletionTab({ records, cohort, onRemove }: Props) {
               <tr>
                 <th>Student ID</th>
                 <th>Status</th>
-                <th>Remove</th>
               </tr>
             </thead>
             <tbody>
@@ -144,25 +141,6 @@ export default function CompletionTab({ records, cohort, onRemove }: Props) {
                 <tr key={r.id}>
                   <td>{r.id}</td>
                   <td>{label(r)}</td>
-                  <td>
-                    {r.submitted && (
-                      <button
-                        type="button"
-                        className="danger"
-                        onClick={() => {
-                          if (
-                            window.confirm(
-                              `Remove ${r.id} from the dashboard? Nothing is deleted; the response moves to the deep archive.`,
-                            )
-                          ) {
-                            void onRemove(r.id);
-                          }
-                        }}
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </td>
                 </tr>
               ))}
             </tbody>

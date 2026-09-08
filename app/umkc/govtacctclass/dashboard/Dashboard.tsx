@@ -104,35 +104,6 @@ export default function Dashboard() {
     void loadSubmitted();
   }, [loadSubmitted]);
 
-  /** Removes one student's assessment response from the dashboard. */
-  async function removeAssessmentStudent(studentId: string) {
-    const key = studentId.trim().toLowerCase();
-    const pathnames = submittedFiles
-      .filter(
-        (f) =>
-          f.kind === "assessment" &&
-          parseAssessmentCsv(f.csv).some(
-            (r) => r.code.trim().toLowerCase() === key,
-          ),
-      )
-      .map((f) => f.pathname);
-    if (pathnames.length === 0) return;
-    try {
-      const res = await fetch("/umkc/govtacctclass/api/submissions", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: "deep", pathnames }),
-      });
-      if (!res.ok) {
-        setSubmitStatus("error");
-        return;
-      }
-      await loadSubmitted();
-    } catch {
-      setSubmitStatus("error");
-    }
-  }
-
   /** Hides a whole cohort, both instruments, in one action. */
   async function hideCohort(cohort: string) {
     if (
@@ -526,7 +497,6 @@ export default function Dashboard() {
               <CompletionTab
                 records={assessmentRecords}
                 cohort={cohortFilter === ALL_COHORTS ? null : cohortFilter}
-                onRemove={removeAssessmentStudent}
               />
             )}
             {assessmentTab === "quant" && (
