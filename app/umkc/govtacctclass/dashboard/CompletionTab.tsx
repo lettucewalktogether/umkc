@@ -127,25 +127,22 @@ export default function CompletionTab({ records, cohort }: Props) {
 
   return (
     <>
-      <h3>Completion</h3>
+      <h3>Students who completed the assessment</h3>
       {rows.length === 0 ? (
-        <p className="saved-empty">
-          No assessment responses yet, and no roster to compare against.
-        </p>
+        <p className="saved-empty">No responses yet.</p>
       ) : roster.length === 0 ? (
-        <p>
-          {done} submitted. Add a roster below to see who has not.
-        </p>
+        <p>{done} completed.</p>
       ) : (
         <p>
-          {done} of {roster.length} on the roster submitted.{" "}
+          {done} of {roster.length} in the class completed it.{" "}
           {missing.length} did not.
         </p>
       )}
 
       {offRoster.length > 0 && (
         <p className="status incomplete">
-          Not on the roster: {offRoster.map((r) => r.id).join(", ")}
+          Not on your class list: {offRoster.map((r) => r.id).join(", ")}.
+          Usually a mistyped ID.
         </p>
       )}
 
@@ -170,20 +167,21 @@ export default function CompletionTab({ records, cohort }: Props) {
         </div>
       )}
 
-      <h3>Roster</h3>
+      <details className="disclosure">
+        <summary>Add your class list to see who has not completed it</summary>
       {cohort === null ? (
         <p className="status">
-          Choose a single cohort above to edit its roster.
+          Choose a single cohort above to edit its class list.
         </p>
       ) : (
         <>
           <p>
-            Student IDs enrolled in this cohort, one per line. Everyone who has
-            submitted is already known, so add them here and type in only the
-            students who have not.
+            Paste the student IDs in your class, one per line. Everyone who has
+            already completed the assessment can be added with the button
+            below, so you only type in the ones who have not.
           </p>
           <label className="field">
-            <span>Student IDs</span>
+            <span>Student IDs in this class</span>
             <textarea
               rows={6}
               value={draft}
@@ -201,8 +199,8 @@ export default function CompletionTab({ records, cohort }: Props) {
               disabled={submittedNotOnRoster.length === 0}
             >
               {submittedNotOnRoster.length === 0
-                ? "All submitted IDs are listed"
-                : `Add the ${submittedNotOnRoster.length} who submitted`}
+                ? "Everyone who completed it is listed"
+                : `Add the ${submittedNotOnRoster.length} who completed it`}
             </button>
             <button
               type="button"
@@ -210,17 +208,18 @@ export default function CompletionTab({ records, cohort }: Props) {
               onClick={saveRoster}
               disabled={status === "saving"}
             >
-              {status === "saving" ? "Saving…" : "Save roster"}
+              {status === "saving" ? "Saving…" : "Save class list"}
             </button>
           </div>
           {status === "saved" && (
-            <p className="status">Roster saved for this cohort.</p>
+            <p className="status">Class list saved.</p>
           )}
           {status === "error" && (
-            <p className="status incomplete">Could not save the roster.</p>
+            <p className="status incomplete">Could not save the class list.</p>
           )}
         </>
       )}
+      </details>
     </>
   );
 }
