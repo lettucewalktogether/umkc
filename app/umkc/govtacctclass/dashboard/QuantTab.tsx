@@ -2,7 +2,14 @@
 
 import Cite from "@/app/Cite";
 import { classCode } from "@/lib/course";
-import { domains, questions, scale } from "@/lib/assessment";
+import {
+  agreementLabel,
+  describeItem,
+  domains,
+  questions,
+  ratingLabel,
+  ratingMeaning,
+} from "@/lib/assessment";
 import { type AssessmentRecord } from "@/lib/dashboard";
 import { cronbachAlpha, fmt, mean, median, sd } from "@/lib/stats";
 import { downloadCsv, slug, toCsv, today } from "@/lib/csv";
@@ -70,6 +77,13 @@ export default function QuantTab({
   const alphaAll =
     completeRows.length > 1 ? cronbachAlpha(completeRows) : null;
 
+  // The items the class rates lowest are the ones worth teaching into.
+  const ranked = questions
+    .map((_, i) => ({ i, avg: perItem[i].length ? mean(perItem[i]) : null }))
+    .filter((x): x is { i: number; avg: number } => x.avg !== null)
+    .sort((a, b) => a.avg - b.avg);
+  const weakest = ranked.slice(0, 3);
+
   function exportCsv() {
     const header = [
       "Class code",
@@ -116,15 +130,27 @@ export default function QuantTab({
         </button>
       </div>
 
-      <h3>Overall</h3>
+      <h3>What the class is saying</h3>
       <p>
-        Mean confidence across every answered item is{" "}
-        <strong>{fmt(mean(overall))}</strong> on the seven-point scale
-        {overall.length > 1 && <> (SD {fmt(sd(overall))})</>}, from{" "}
-        {overall.length} answered item
-        {overall.length === 1 ? "" : "s"}. The scale runs from 1 (
-        {scale[0][2].toLowerCase()}) to 7 ({scale[6][2].toLowerCase()}).
+        Across every answer, the class sits at{" "}
+        <strong>{ratingLabel(mean(overall)).toLowerCase()}</strong> &mdash;{" "}
+        &ldquo;{ratingMeaning(mean(overall))}&rdquo; That is an average of{" "}
+        {fmt(mean(overall))} out of 7
+        {overall.length > 1 && (
+          <> with {agreementLabel(sd(overall))} between students</>
+        )}
+        .
       </p>
+      {weakest.length > 0 && (
+        <p>
+          <strong>Least confident:</strong>{" "}
+          {weakest
+            .map((w) => `Q${w.i + 1} (${fmt(w.avg)})`)
+            .join(", ")}
+          . These are where the class says it is least able to explain or
+          apply the material.
+        </p>
+      )}
 
       <h3>By item</h3>
       <div className="tablewrap">
@@ -136,6 +162,7 @@ export default function QuantTab({
               <th className="num">Mean</th>
               <th className="num">SD</th>
               <th className="num">Median</th>
+              <th>What this says</th>
               {RATINGS.map((r) => (
                 <th className="num" key={r}>
                   {r}
@@ -155,6 +182,7 @@ export default function QuantTab({
                   <td className="num">{vs.length ? fmt(mean(vs)) : "—"}</td>
                   <td className="num">{vs.length > 1 ? fmt(sd(vs)) : "—"}</td>
                   <td className="num">{vs.length ? median(vs) : "—"}</td>
+                  <td>{describeItem(vs)}</td>
                   {RATINGS.map((r) => (
                     <td className="num" key={r}>
                       {vs.filter((v) => v === r).length || "—"}
@@ -183,6 +211,7 @@ export default function QuantTab({
               <th className="num">Mean</th>
               <th className="num">SD</th>
               <th className="num">Out of</th>
+              <th>What this says</th>
               <th className="num">Alpha</th>
             </tr>
           </thead>
@@ -203,6 +232,13 @@ export default function QuantTab({
                   {d.sdSubtotal === null ? "—" : fmt(d.sdSubtotal)}
                 </td>
                 <td className="num">{d.maxSubtotal}</td>
+                <td>
+                  {d.meanSubtotal === null
+                    ? "—"
+                    : `${ratingLabel(
+                        d.meanSubtotal / (d.domain.to - d.domain.from + 1),
+                      )} on average`}
+                </td>
                 <td className="num">
                   {d.alpha === null ? "—" : fmt(d.alpha)}
                 </td>
@@ -224,6 +260,17 @@ export default function QuantTab({
                   : "—"}
               </td>
               <td className="num">70</td>
+              <td>
+                {completeRows.length
+                  ? `${ratingLabel(
+                      mean(
+                        completeRows.map(
+                          (r) => r.reduce((a, b) => a + b, 0) / r.length,
+                        ),
+                      ),
+                    )} on average`
+                  : "—"}
+              </td>
               <td className="num">
                 {alphaAll === null ? "—" : fmt(alphaAll)}
               </td>

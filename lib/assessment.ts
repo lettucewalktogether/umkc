@@ -134,3 +134,52 @@ export const domains: Domain[] = [
     possible: "2-14",
   },
 ];
+
+/**
+ * Plain-language readings of the numbers, so the dashboard says what a score
+ * means rather than only what it is.
+ */
+
+/** The scale label nearest to an average rating, e.g. 4.6 -> "Confident". */
+export function ratingLabel(value: number): string {
+  const nearest = Math.min(7, Math.max(1, Math.round(value)));
+  return scale[nearest - 1][2];
+}
+
+/** What a respondent at that level said they could do. */
+export function ratingMeaning(value: number): string {
+  const nearest = Math.min(7, Math.max(1, Math.round(value)));
+  return scale[nearest - 1][3];
+}
+
+/** How much the class agrees, from the spread of its ratings. */
+export function agreementLabel(standardDeviation: number | null): string | null {
+  if (standardDeviation === null) return null;
+  if (standardDeviation < 0.8) return "close agreement";
+  if (standardDeviation < 1.5) return "some spread";
+  return "widely split";
+}
+
+/**
+ * One sentence describing an item: where the class sits, how much it agrees,
+ * and how many are struggling. Ratings of 3 or below are the ones worth
+ * teaching into, since the scale's own wording at that level is that the
+ * respondent cannot apply the area consistently.
+ */
+export function describeItem(values: number[]): string {
+  if (values.length === 0) return "No answers yet.";
+  const avg = values.reduce((a, b) => a + b, 0) / values.length;
+  const low = values.filter((v) => v <= 3).length;
+  const high = values.filter((v) => v >= 6).length;
+
+  const parts = [`${ratingLabel(avg)} on average`];
+  if (low > 0) {
+    parts.push(
+      `${low} of ${values.length} ${low === 1 ? "is" : "are"} not confident`,
+    );
+  }
+  if (low === 0 && high > 0) {
+    parts.push(`${high} of ${values.length} very confident`);
+  }
+  return `${parts.join("; ")}.`;
+}

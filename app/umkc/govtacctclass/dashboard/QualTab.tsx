@@ -109,15 +109,15 @@ export default function QualTab({
         range {Math.min(...words)}&ndash;{Math.max(...words)}).
       </p>
 
-      <h3>Indicators across all responses</h3>
+      <h3>What the writing shows</h3>
       <div className="tablewrap">
         <table>
           <thead>
             <tr>
-              <th>Indicator</th>
+              <th>What was looked for</th>
               <th className="num">Responses</th>
               <th className="num">Share</th>
-              <th>What it detects</th>
+              <th>What this says</th>
             </tr>
           </thead>
           <tbody>
@@ -130,14 +130,21 @@ export default function QualTab({
                   {scanned.filter((s) => s.present[f.key]).length}
                 </td>
                 <td className="num">{Math.round(share(f.key) * 100)}%</td>
-                <td>{f.definition}</td>
+                <td>
+                  {f.reading(
+                    Math.round(share(f.key) * 100),
+                    scanned.filter((s) => s.present[f.key]).length,
+                    total,
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <h3>Indicators by item</h3>
+      <h3>By question</h3>
+      <p>Share of responses to each question showing each feature.</p>
       <div className="tablewrap">
         <table>
           <thead>
@@ -182,7 +189,7 @@ export default function QualTab({
               <th>Student ID</th>
               <th className="num">Item</th>
               <th>Response</th>
-              <th>Indicators</th>
+              <th>Features found</th>
             </tr>
           </thead>
           <tbody>
