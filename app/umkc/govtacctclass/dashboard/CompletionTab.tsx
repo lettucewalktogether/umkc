@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { type AssessmentRecord } from "@/lib/dashboard";
+import { questions, ratingLabel } from "@/lib/assessment";
 
 /**
  * Who has completed the assessment, and who has not.
@@ -29,6 +30,7 @@ export default function CompletionTab({ records, cohort }: Props) {
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">(
     "idle",
   );
+  const [openId, setOpenId] = useState<string | null>(null);
 
   const loadRoster = useCallback(async () => {
     if (!cohort) return;
@@ -131,7 +133,7 @@ export default function CompletionTab({ records, cohort }: Props) {
       {rows.length === 0 ? (
         <p className="saved-empty">No responses yet.</p>
       ) : roster.length === 0 ? (
-        <p>{done} completed.</p>
+        <p>{done} completed. Click a student ID to read their answers.</p>
       ) : (
         <p>
           {done} of {roster.length} in the class completed it.{" "}
@@ -156,12 +158,61 @@ export default function CompletionTab({ records, cohort }: Props) {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
-                <tr key={r.id}>
-                  <td>{r.id}</td>
-                  <td>{label(r)}</td>
-                </tr>
-              ))}
+              {rows.map((r) => {
+                const key = r.id.trim().toLowerCase();
+                const answer = records.find(
+                  (x) => x.code.trim().toLowerCase() === key,
+                );
+                const open = openId === r.id;
+                return (
+                  <Fragment key={r.id}>
+                    <tr>
+                      <td>
+                        {answer ? (
+                          <button
+                            type="button"
+                            className="linklike"
+                            aria-expanded={open}
+                            onClick={() => setOpenId(open ? null : r.id)}
+                          >
+                            {r.id}
+                          </button>
+                        ) : (
+                          r.id
+                        )}
+                      </td>
+                      <td>{label(r)}</td>
+                    </tr>
+                    {open && answer && (
+                      <tr>
+                        <td colSpan={2}>
+                          <div className="answers">
+                            {questions.map((q, i) => {
+                              const rating = answer.ratings[i];
+                              const said = answer.explanations[i] ?? "";
+                              return (
+                                <div className="answer" key={q.stem}>
+                                  <p className="answer-q">
+                                    <strong>Q{i + 1}.</strong> {q.stem}
+                                  </p>
+                                  <p className="answer-rating">
+                                    {rating === null
+                                      ? "No rating"
+                                      : `${rating} of 7 — ${ratingLabel(rating)}`}
+                                  </p>
+                                  <p className="answer-said">
+                                    {said.trim() || "No explanation given."}
+                                  </p>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>

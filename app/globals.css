@@ -1094,3 +1094,48 @@ button.section.on .section-count {
   background: var(--bg-sunken);
   text-decoration: none;
 }
+
+/* A table cell that behaves as a link, for expanding a row in place. */
+button.linklike {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 550;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+button.linklike:hover {
+  color: var(--text);
+}
+
+/* One student's answers, opened under their row. */
+.answers {
+  display: grid;
+  gap: 1rem;
+  padding: 0.5rem 0 0.75rem;
+}
+
+.answer {
+  border-left: 2px solid var(--rule-strong);
+  padding-left: 0.85rem;
+}
+
+.answer-q {
+  margin: 0 0 0.2rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.answer-rating {
+  margin: 0 0 0.25rem;
+  font-weight: 600;
+}
+
+.answer-said {
+  margin: 0;
+  white-space: pre-wrap;
+}
